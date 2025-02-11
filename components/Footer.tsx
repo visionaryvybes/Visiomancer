@@ -1,118 +1,141 @@
 import React from "react"
 import Link from "next/link"
 import { Facebook, Instagram, Twitter } from "lucide-react"
+import { TrustBadges } from "./ui/trust-badges"
 
 export default function Footer() {
   return (
-    <footer className="relative">
-      {/* Perspective lines decoration */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute inset-0 opacity-20"
-          style={{
-            backgroundImage: `
-              linear-gradient(to right, rgba(59, 130, 246, 0.1) 1px, transparent 1px),
-              linear-gradient(to bottom, rgba(59, 130, 246, 0.1) 1px, transparent 1px)
-            `,
-            backgroundSize: '40px 40px',
-            transform: 'rotateX(60deg) translateZ(0)',
-            transformOrigin: '50% 100%',
-            maskImage: 'linear-gradient(to top, transparent, black 10%, black 90%, transparent)',
-          }}
-        />
+    <footer className="relative bg-gradient-to-b from-black/50 to-black">
+      {/* Trust Badges Section */}
+      <div className="relative border-b border-white/10 bg-black/30 backdrop-blur-sm">
+        <div className="container mx-auto px-4">
+          <div className="py-12">
+            <TrustBadges />
+          </div>
+        </div>
       </div>
 
-      {/* Glowing top border */}
-      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-blue-500/50 to-transparent" />
-
-      <div className="relative border-t border-white/10 bg-[#0B1120]/80 backdrop-blur-sm">
-        <div className="container mx-auto px-4 py-12">
-          <div className="grid grid-cols-1 gap-12 md:grid-cols-4">
-            {/* About Section */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-white">About Us</h3>
-              <div className="relative">
-                <div className="absolute -inset-0.5 rounded-lg bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-blue-500/20 opacity-25 blur" />
-                <p className="relative rounded-lg bg-black/20 p-4 text-sm text-gray-400">
-                  VISIONMANCER is your premier destination for unique and stylish products.
-                </p>
+      {/* Main Footer Content */}
+      <div className="relative">
+        <div className="container mx-auto px-4">
+          <div className="py-16">
+            <div className="grid grid-cols-1 gap-12 md:grid-cols-4">
+              {/* About Section */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-white">About Us</h3>
+                <div className="relative">
+                  <div className="absolute -inset-0.5 rounded-lg bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-blue-500/20 opacity-75 blur" />
+                  <p className="relative rounded-lg bg-black/40 p-4 text-sm text-white/70 backdrop-blur-sm">
+                    VISIOMANCER is your premier destination for unique and stylish products.
+                  </p>
+                </div>
               </div>
-            </div>
-            
-            {/* Quick Links */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-white">Quick Links</h3>
-              <ul className="space-y-2">
-                <li>
-                  <Link href="/products" className="group relative text-sm text-gray-400 transition-colors hover:text-white">
-                    <span className="relative z-10">Products</span>
-                    <span className="absolute -bottom-px left-0 h-px w-0 bg-gradient-to-r from-blue-500 to-purple-500 transition-all group-hover:w-full" />
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/categories" className="group relative text-sm text-gray-400 transition-colors hover:text-white">
-                    <span className="relative z-10">Categories</span>
-                    <span className="absolute -bottom-px left-0 h-px w-0 bg-gradient-to-r from-blue-500 to-purple-500 transition-all group-hover:w-full" />
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/about" className="group relative text-sm text-gray-400 transition-colors hover:text-white">
-                    <span className="relative z-10">About</span>
-                    <span className="absolute -bottom-px left-0 h-px w-0 bg-gradient-to-r from-blue-500 to-purple-500 transition-all group-hover:w-full" />
-                  </Link>
-                </li>
-              </ul>
-            </div>
-            
-            {/* Customer Service */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-white">Customer Service</h3>
-              <ul className="space-y-2">
-                <li>
-                  <Link href="/contact" className="group relative text-sm text-gray-400 transition-colors hover:text-white">
-                    <span className="relative z-10">Contact Us</span>
-                    <span className="absolute -bottom-px left-0 h-px w-0 bg-gradient-to-r from-blue-500 to-purple-500 transition-all group-hover:w-full" />
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/shipping" className="group relative text-sm text-gray-400 transition-colors hover:text-white">
-                    <span className="relative z-10">Shipping Info</span>
-                    <span className="absolute -bottom-px left-0 h-px w-0 bg-gradient-to-r from-blue-500 to-purple-500 transition-all group-hover:w-full" />
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/returns" className="group relative text-sm text-gray-400 transition-colors hover:text-white">
-                    <span className="relative z-10">Returns</span>
-                    <span className="absolute -bottom-px left-0 h-px w-0 bg-gradient-to-r from-blue-500 to-purple-500 transition-all group-hover:w-full" />
-                  </Link>
-                </li>
-              </ul>
-            </div>
-            
-            {/* Follow Us */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-white">Follow Us</h3>
-              <div className="flex space-x-4">
-                <Link href="#" className="group relative text-gray-400 transition-colors hover:text-white">
-                  <div className="absolute -inset-2 rounded-full bg-blue-500/20 opacity-0 blur transition-opacity group-hover:opacity-100" />
-                  <Facebook className="relative h-5 w-5" />
-                </Link>
-                <Link href="#" className="group relative text-gray-400 transition-colors hover:text-white">
-                  <div className="absolute -inset-2 rounded-full bg-blue-500/20 opacity-0 blur transition-opacity group-hover:opacity-100" />
-                  <Instagram className="relative h-5 w-5" />
-                </Link>
-                <Link href="#" className="group relative text-gray-400 transition-colors hover:text-white">
-                  <div className="absolute -inset-2 rounded-full bg-blue-500/20 opacity-0 blur transition-opacity group-hover:opacity-100" />
-                  <Twitter className="relative h-5 w-5" />
-                </Link>
+              
+              {/* Quick Links */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-white">Quick Links</h3>
+                <ul className="space-y-3">
+                  <li>
+                    <Link href="/products" className="text-sm text-white/70 hover:text-white transition-colors">
+                      Products
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/categories" className="text-sm text-white/70 hover:text-white transition-colors">
+                      Categories
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/about" className="text-sm text-white/70 hover:text-white transition-colors">
+                      About Us
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/contact" className="text-sm text-white/70 hover:text-white transition-colors">
+                      Contact
+                    </Link>
+                  </li>
+                </ul>
+              </div>
+
+              {/* Customer Service */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-white">Customer Service</h3>
+                <ul className="space-y-3">
+                  <li>
+                    <Link href="/shipping" className="text-sm text-white/70 hover:text-white transition-colors">
+                      Shipping Info
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/returns" className="text-sm text-white/70 hover:text-white transition-colors">
+                      Returns Policy
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/faq" className="text-sm text-white/70 hover:text-white transition-colors">
+                      FAQ
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/size-guide" className="text-sm text-white/70 hover:text-white transition-colors">
+                      Size Guide
+                    </Link>
+                  </li>
+                </ul>
+              </div>
+
+              {/* Connect */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-white">Connect</h3>
+                <div className="flex space-x-4">
+                  <a
+                    href="https://facebook.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group bg-white/5 p-2 rounded-lg hover:bg-white/10 transition-colors"
+                    aria-label="Facebook"
+                  >
+                    <Facebook className="h-5 w-5 text-white/70 group-hover:text-white transition-colors" />
+                  </a>
+                  <a
+                    href="https://instagram.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group bg-white/5 p-2 rounded-lg hover:bg-white/10 transition-colors"
+                    aria-label="Instagram"
+                  >
+                    <Instagram className="h-5 w-5 text-white/70 group-hover:text-white transition-colors" />
+                  </a>
+                  <a
+                    href="https://twitter.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group bg-white/5 p-2 rounded-lg hover:bg-white/10 transition-colors"
+                    aria-label="Twitter"
+                  >
+                    <Twitter className="h-5 w-5 text-white/70 group-hover:text-white transition-colors" />
+                  </a>
+                </div>
               </div>
             </div>
           </div>
-          
-          {/* Copyright */}
-          <div className="mt-12 border-t border-white/10 pt-8">
-            <p className="text-center text-sm text-gray-400">
-              © {new Date().getFullYear()} VISIONMANCER Store. All rights reserved.
-            </p>
+
+          {/* Bottom Bar */}
+          <div className="border-t border-white/10 py-6">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+              <p className="text-sm text-white/50">
+                © {new Date().getFullYear()} VISIOMANCER. All rights reserved.
+              </p>
+              <div className="flex items-center gap-6">
+                <Link href="/privacy" className="text-sm text-white/50 hover:text-white transition-colors">
+                  Privacy Policy
+                </Link>
+                <Link href="/terms" className="text-sm text-white/50 hover:text-white transition-colors">
+                  Terms of Service
+                </Link>
+              </div>
+            </div>
           </div>
         </div>
       </div>

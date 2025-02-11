@@ -1,7 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  reactStrictMode: true,
+  swcMinify: true,
   images: {
-    unoptimized: true, // Disable Next.js image optimization to use original Printify CDN images
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: 'https',
@@ -9,7 +11,10 @@ const nextConfig = {
         pathname: '/**',
       },
     ],
-  }
+  },
+  experimental: {
+    optimizeCss: true,
+  },
 }
 
 module.exports = nextConfig 

@@ -1,94 +1,80 @@
 'use client'
 
-import React, { useEffect, useState } from "react"
+import React from "react"
 import ProductCard from "./ProductCard"
-import { Loader2 } from "lucide-react"
+import { motion } from "framer-motion"
+import { Product } from "../types/product"
+import { ProductGridSkeleton } from "./ui/product-skeleton"
 
-interface PrintifyProduct {
-  id: string
-  title: string
-  description: string
-  images: { src: string }[]
-  variants: Array<{
-    id: string
-    title: string
-    price: number
-    is_enabled: boolean
-    options: Record<string, string>
-  }>
-  options: Array<{
-    name: string
-    values: string[]
-  }>
+interface ProductGridProps {
+  products: Product[]
+  isLoading?: boolean
 }
 
-export default function ProductGrid() {
-  const [products, setProducts] = useState<PrintifyProduct[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    async function fetchProducts() {
-      try {
-        const response = await fetch('/api/printify/products')
-        const data = await response.json()
-        
-        if (data.error) {
-          throw new Error(data.error)
-        }
-
-        setProducts(data.data)
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to fetch products')
-      } finally {
-        setLoading(false)
-      }
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1
     }
+  }
+}
 
-    fetchProducts()
-  }, [])
+const productVariants = {
+  hidden: { 
+    opacity: 0,
+    y: 20,
+  },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      type: "spring",
+      stiffness: 300,
+      damping: 30
+    }
+  }
+}
 
-  if (loading) {
-    return (
-      <div className="grid grid-cols-1 gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
-        {[...Array(8)].map((_, i) => (
-          <div key={i} className="animate-pulse">
-            <div className="aspect-square rounded-2xl bg-gray-800" />
-            <div className="mt-4 space-y-3">
-              <div className="h-4 w-2/3 rounded bg-gray-800" />
-              <div className="h-4 w-1/3 rounded bg-gray-800" />
-            </div>
-          </div>
-        ))}
-      </div>
-    )
+export default function ProductGrid({ products, isLoading = false }: ProductGridProps) {
+  if (isLoading) {
+    return <ProductGridSkeleton />
   }
 
-  if (error) {
+  if (!products || products.length === 0) {
     return (
-      <div className="rounded-lg border border-red-500/10 bg-red-500/5 p-4 text-center text-red-500">
-        {error}
-      </div>
-    )
-  }
-
-  if (products.length === 0) {
-    return (
-      <div className="rounded-lg border bg-card p-8 text-center">
-        <p className="text-lg text-muted-foreground">No products found</p>
-      </div>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex min-h-[400px] items-center justify-center"
+      >
+        <p className="text-lg text-white/60">No products found</p>
+      </motion.div>
     )
   }
 
   return (
-    <div className="grid grid-cols-1 gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
-      {products.map((product, index) => (
-        <ProductCard 
-          key={product.id} 
-          product={product} 
-          priority={index < 4} // Set priority for first 4 products (above the fold)
-        />
-      ))}
+    <div className="w-full">
+      <motion.div
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 auto-rows-fr"
+      >
+        {products.map((product, index) => (
+          <motion.div
+            key={product.id}
+            variants={productVariants}
+            className="h-full"
+          >
+            <ProductCard 
+              product={product} 
+              priority={index < 4} 
+            />
+          </motion.div>
+        ))}
+      </motion.div>
     </div>
   )
 } 

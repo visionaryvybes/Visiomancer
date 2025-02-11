@@ -47,7 +47,7 @@ export default function ContactPage() {
                     <Mail className="h-5 w-5 text-blue-400" />
                     <div>
                       <p className="font-medium">Email</p>
-                      <p className="text-gray-300">support@visionmancer.com</p>
+                      <p className="text-gray-300">support@visiomancer.com</p>
                     </div>
                   </div>
 

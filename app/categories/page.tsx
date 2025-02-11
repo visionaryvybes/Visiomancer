@@ -1,151 +1,221 @@
 'use client'
 
-import React, { useEffect, useState } from "react"
-import Image from "next/image"
-import Link from "next/link"
+import React, { useEffect, useState } from 'react'
+import Image from 'next/image'
+import Link from 'next/link'
+import { motion } from 'framer-motion'
+import { PrintifyClient } from '../api/printify/client'
 import { WarpBackground } from "../../components/ui/warp-background"
-import { Loader2 } from "lucide-react"
 
-interface Category {
+interface Product {
   id: string
-  name: string
-  productCount: number
+  title: string
+  description: string
+  images: { src: string }[]
+  variants: Array<{
+    id: string
+    price: number
+    title: string
+    is_enabled: boolean
+    options: Record<string, string>
+  }>
 }
 
+const categories = [
+  {
+    id: "posters",
+    title: "Posters",
+    description: "High-quality art prints and posters",
+    image: "/categories/posters.jpg",
+    count: 24,
+    featured: true
+  },
+  {
+    id: "wall-art",
+    title: "Wall Art",
+    description: "Premium wall art and canvas prints",
+    image: "/categories/wall-art.jpg",
+    count: 18,
+    featured: true
+  },
+  {
+    id: "digital-art",
+    title: "Digital Art",
+    description: "Contemporary digital artwork",
+    image: "/categories/digital-art.jpg",
+    count: 15,
+    featured: true
+  },
+  {
+    id: "abstract",
+    title: "Abstract",
+    description: "Abstract and modern art pieces",
+    image: "/categories/abstract.jpg",
+    count: 12,
+    featured: false
+  },
+  {
+    id: "photography",
+    title: "Photography",
+    description: "Fine art photography prints",
+    image: "/categories/photography.jpg",
+    count: 20,
+    featured: true
+  },
+  {
+    id: "minimalist",
+    title: "Minimalist",
+    description: "Clean and minimalist designs",
+    image: "/categories/minimalist.jpg",
+    count: 16,
+    featured: false
+  }
+]
+
 export default function CategoriesPage() {
-  const [categories, setCategories] = useState<Category[]>([])
+  const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    async function fetchCategories() {
+    async function fetchProducts() {
       try {
-        const response = await fetch('/api/printify/categories')
-        const data = await response.json()
+        const client = new PrintifyClient(process.env.NEXT_PUBLIC_PRINTIFY_API_TOKEN || '')
+        const response = await client.getProducts()
+        
+        // Transform the response to match our needs
+        const formattedProducts = response.data.map(product => ({
+          id: product.id,
+          title: product.title,
+          description: product.description || '',
+          images: product.images,
+          variants: product.variants.map(variant => ({
+            id: variant.id,
+            title: variant.title || '',
+            price: variant.price,
+            is_enabled: true,
+            options: variant.options || {}
+          }))
+        }))
 
-        if (data.error) {
-          throw new Error(data.error)
-        }
-
-        setCategories(data.data)
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to fetch categories')
+        setProducts(formattedProducts)
+      } catch (error) {
+        console.error('Failed to fetch products:', error)
       } finally {
         setLoading(false)
       }
     }
 
-    fetchCategories()
+    fetchProducts()
   }, [])
+
+  // Separate featured and regular categories
+  const featuredCategories = categories.filter(cat => cat.featured)
+  const regularCategories = categories.filter(cat => !cat.featured)
 
   if (loading) {
     return (
-      <WarpBackground>
-        <div className="flex min-h-[50vh] items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      </WarpBackground>
-    )
-  }
-
-  if (error) {
-    return (
-      <WarpBackground>
-        <div className="mx-auto max-w-2xl px-4 py-16 text-center">
-          <div className="rounded-lg border border-red-500/10 bg-red-500/5 p-4 text-red-500">
-            {error}
+      <div className="min-h-screen bg-[#0D1117]">
+        <div className="container mx-auto px-4 py-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            {[...Array(6)].map((_, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: [0.3, 0.6, 0.3] }}
+                transition={{ duration: 1.5, repeat: Infinity }}
+                className="bg-[#1A1F2B] rounded-lg overflow-hidden shadow-lg aspect-[4/5]"
+              />
+            ))}
           </div>
-          <Link
-            href="/"
-            className="mt-4 inline-block rounded-lg bg-primary px-6 py-3 font-semibold text-primary-foreground hover:bg-primary/90"
-          >
-            Return to Home
-          </Link>
         </div>
-      </WarpBackground>
+      </div>
     )
   }
 
   return (
     <div className="min-h-screen">
       <WarpBackground>
-        <div className="py-8">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="text-center">
-              <h1 className="mb-4 text-4xl font-bold">Shop by Category</h1>
-              <p className="mb-8 text-lg text-muted-foreground">
-                Explore our collections and find what you love
-              </p>
-            </div>
+        <div className="container mx-auto px-4 py-16">
+          {/* Header */}
+          <div className="mb-12 text-center">
+            <h1 className="text-4xl font-bold mb-4">Shop by Category</h1>
+            <p className="text-lg text-white/70">
+              Explore our collection of unique designs across different categories
+            </p>
+          </div>
 
-            <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-              {categories.map((category) => (
-                <Link 
+          {/* Featured Categories */}
+          <div className="mb-16">
+            <h2 className="text-2xl font-semibold mb-8">Featured Categories</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {featuredCategories.map((category) => (
+                <Link
                   key={category.id}
-                  href={`/categories/${category.id}`}
-                  className="group block"
+                  href={`/products?category=${category.id}`}
+                  className="group relative overflow-hidden rounded-lg bg-white aspect-[4/3]"
                 >
-                  <div className="overflow-hidden rounded-lg border bg-card shadow-sm transition-all hover:shadow-md">
-                    <div className="relative aspect-[4/3]">
-                      <Image
-                        src={`https://picsum.photos/seed/${category.id}/800/600`}
-                        alt={category.name}
-                        fill
-                        className="object-cover transition-transform group-hover:scale-105"
-                      />
-                      <div className="absolute inset-0 bg-black/20" />
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="text-center">
-                          <h2 className="text-2xl font-bold text-white">{category.name}</h2>
-                          <span className="mt-4 inline-block rounded-full bg-white/20 px-4 py-2 text-sm text-white">
-                            {category.productCount} Products
-                          </span>
-                        </div>
-                      </div>
+                  {/* Category Image */}
+                  <div className="absolute inset-0 bg-black">
+                    <Image
+                      src={category.image}
+                      alt={category.title}
+                      fill
+                      className="object-cover opacity-80 group-hover:opacity-100 transition-opacity"
+                    />
+                  </div>
+
+                  {/* Category Info */}
+                  <div className="absolute inset-0 p-6 flex flex-col justify-end bg-gradient-to-t from-black/80 via-black/40 to-transparent">
+                    <h3 className="text-2xl font-bold text-white mb-2">
+                      {category.title}
+                    </h3>
+                    <p className="text-white/80 mb-4 line-clamp-2">
+                      {category.description}
+                    </p>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-white/60">
+                        {category.count} items
+                      </span>
+                      <span className="text-sm text-blue-400 group-hover:translate-x-1 transition-transform">
+                        Browse →
+                      </span>
                     </div>
                   </div>
                 </Link>
               ))}
             </div>
+          </div>
 
-            {/* Featured Collections */}
-            <div className="mt-16">
-              <h2 className="mb-8 text-center text-3xl font-bold">Featured Collections</h2>
-              <div className="grid gap-8 md:grid-cols-2">
-                <Link href="/collections/new-arrivals" className="group block">
-                  <div className="relative aspect-[2/1] overflow-hidden rounded-lg">
-                    <Image
-                      src="https://picsum.photos/seed/new-arrivals/800/400"
-                      alt="New Arrivals"
-                      fill
-                      className="object-cover transition-transform group-hover:scale-105"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                    <div className="absolute bottom-0 left-0 p-6">
-                      <h3 className="text-2xl font-bold text-white">New Arrivals</h3>
-                      <p className="mt-2 text-white/90">Check out our latest products</p>
-                    </div>
-                  </div>
+          {/* Regular Categories */}
+          <div>
+            <h2 className="text-2xl font-semibold mb-8">All Categories</h2>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {regularCategories.map((category) => (
+                <Link
+                  key={category.id}
+                  href={`/products?category=${category.id}`}
+                  className="group p-4 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 transition-colors"
+                >
+                  <h3 className="font-medium mb-1">{category.title}</h3>
+                  <p className="text-sm text-white/60 mb-2 line-clamp-2">
+                    {category.description}
+                  </p>
+                  <span className="text-xs text-white/40">
+                    {category.count} items
+                  </span>
                 </Link>
-
-                <Link href="/collections/best-sellers" className="group block">
-                  <div className="relative aspect-[2/1] overflow-hidden rounded-lg">
-                    <Image
-                      src="https://picsum.photos/seed/best-sellers/800/400"
-                      alt="Best Sellers"
-                      fill
-                      className="object-cover transition-transform group-hover:scale-105"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                    <div className="absolute bottom-0 left-0 p-6">
-                      <h3 className="text-2xl font-bold text-white">Best Sellers</h3>
-                      <p className="mt-2 text-white/90">Our most popular items</p>
-                    </div>
-                  </div>
-                </Link>
-              </div>
+              ))}
             </div>
           </div>
+
+          {/* Navigation Breadcrumbs */}
+          <nav className="flex items-center space-x-2 text-sm text-white/60 mb-8">
+            <Link href="/" className="hover:text-white">
+              Home
+            </Link>
+            <span>/</span>
+            <span className="text-white">Categories</span>
+          </nav>
         </div>
       </WarpBackground>
     </div>

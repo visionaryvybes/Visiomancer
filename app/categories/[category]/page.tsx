@@ -1,10 +1,29 @@
 'use client'
 
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { WarpBackground } from "../../../components/ui/warp-background"
 import ProductGrid from "../../../components/ProductGrid"
 import { ChevronRight } from "lucide-react"
 import Link from "next/link"
+import { PrintifyClient } from "../../api/printify/client"
+
+interface Product {
+  id: string
+  title: string
+  description: string
+  images: { src: string }[]
+  variants: Array<{
+    id: string
+    title: string
+    price: number
+    is_enabled: boolean
+    options: Record<string, string>
+  }>
+  options: Array<{
+    name: string
+    values: string[]
+  }>
+}
 
 interface CategoryPageProps {
   params: {
@@ -13,10 +32,88 @@ interface CategoryPageProps {
 }
 
 export default function CategoryPage({ params }: CategoryPageProps) {
+  const [products, setProducts] = useState<Product[]>([])
+  const [isLoading, setIsLoading] = useState(true)
   const [sortBy, setSortBy] = useState("newest")
   const [priceRange, setPriceRange] = useState("")
 
   const categoryTitle = params.category.charAt(0).toUpperCase() + params.category.slice(1)
+
+  useEffect(() => {
+    async function fetchProducts() {
+      setIsLoading(true)
+      try {
+        const client = new PrintifyClient(process.env.NEXT_PUBLIC_PRINTIFY_API_TOKEN || '')
+        const shops = await client.getShops()
+        if (shops.length === 0) return
+
+        const shopId = shops[0].id.toString()
+        const response = await client.getProducts(shopId)
+        
+        // Filter products by category and transform the response
+        const categoryProducts: Product[] = response.data
+          .filter((product: any) => product.tags?.includes(params.category))
+          .map((product: any) => ({
+            id: product.id,
+            title: product.title,
+            description: product.description || '',
+            images: product.images.map((img: any) => ({ src: img.src })),
+            variants: product.variants.map((variant: any) => ({
+              id: variant.id,
+              title: variant.title || '',
+              price: variant.price,
+              is_enabled: true,
+              options: variant.options || {}
+            })),
+            options: product.options?.map((option: any) => ({
+              name: option.name,
+              values: option.values
+            })) || []
+          }))
+
+        // Apply sorting
+        const sortedProducts = sortProducts(categoryProducts, sortBy)
+        
+        // Apply price filtering
+        const filteredProducts = filterProductsByPrice(sortedProducts, priceRange)
+        
+        setProducts(filteredProducts)
+      } catch (error) {
+        console.error('Failed to fetch products:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchProducts()
+  }, [params.category, sortBy, priceRange])
+
+  const sortProducts = (products: Product[], sort: string) => {
+    return [...products].sort((a, b) => {
+      switch (sort) {
+        case 'price-low':
+          return (a.variants[0]?.price || 0) - (b.variants[0]?.price || 0)
+        case 'price-high':
+          return (b.variants[0]?.price || 0) - (a.variants[0]?.price || 0)
+        case 'newest':
+        default:
+          return 0 // In a real app, you'd sort by creation date
+      }
+    })
+  }
+
+  const filterProductsByPrice = (products: Product[], range: string) => {
+    if (!range) return products
+
+    const [min, max] = range.split('-').map(Number)
+    return products.filter(product => {
+      const price = product.variants[0]?.price || 0
+      if (max) {
+        return price >= min && price <= max
+      }
+      return price >= min
+    })
+  }
 
   return (
     <div className="min-h-screen">
@@ -45,10 +142,10 @@ export default function CategoryPage({ params }: CategoryPageProps) {
                   value={priceRange}
                   onChange={(e) => setPriceRange(e.target.value)}
                 >
-                  <option value="">Price Range</option>
+                  <option value="">All Prices</option>
                   <option value="0-50">$0 - $50</option>
                   <option value="50-100">$50 - $100</option>
-                  <option value="100+">$100+</option>
+                  <option value="100">$100+</option>
                 </select>
 
                 <select
@@ -64,7 +161,7 @@ export default function CategoryPage({ params }: CategoryPageProps) {
             </div>
 
             {/* Products Grid */}
-            <ProductGrid />
+            <ProductGrid products={products} isLoading={isLoading} />
           </div>
         </div>
       </WarpBackground>

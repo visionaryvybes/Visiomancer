@@ -6,13 +6,13 @@ export default function AboutPage() {
     <div className="min-h-screen">
       <WarpBackground>
         <div className="mx-auto max-w-4xl px-4 py-16">
-          <h1 className="mb-8 text-center text-4xl font-bold">About VISIONMANCER</h1>
+          <h1 className="mb-8 text-center text-4xl font-bold">About VISIOMANCER</h1>
           
           <div className="space-y-8">
             <section className="rounded-lg border border-white/10 bg-black/20 p-6 backdrop-blur-sm">
               <h2 className="mb-4 text-2xl font-semibold">Our Story</h2>
               <p className="text-gray-300">
-                VISIONMANCER was founded with a simple yet powerful vision: to bring unique, 
+                VISIOMANCER was founded with a simple yet powerful vision: to bring unique, 
                 high-quality products to those who appreciate distinctive design and exceptional 
                 craftsmanship. Our journey began with a passion for creating products that 
                 combine aesthetic beauty with practical functionality.
@@ -31,7 +31,7 @@ export default function AboutPage() {
             <section className="rounded-lg border border-white/10 bg-black/20 p-6 backdrop-blur-sm">
               <h2 className="mb-4 text-2xl font-semibold">Quality & Sustainability</h2>
               <p className="text-gray-300">
-                At VISIONMANCER, we believe in responsible business practices. We work with 
+                At VISIOMANCER, we believe in responsible business practices. We work with 
                 suppliers who share our commitment to quality and sustainability. Our products 
                 are made to last, reducing waste and environmental impact while providing 
                 excellent value to our customers.

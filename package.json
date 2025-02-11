@@ -1,5 +1,5 @@
 {
-  "name": "visionmancer",
+  "name": "visiomancer",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -9,15 +9,31 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@floating-ui/react": "^0.27.4",
+    "@headlessui/react": "^2.2.0",
     "@radix-ui/react-slot": "^1.0.2",
+    "@tailwindcss/typography": "^0.5.16",
+    "@vercel/analytics": "^1.4.1",
+    "@vercel/speed-insights": "^1.1.0",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.0.0",
-    "framer-motion": "^10.16.4",
+    "critters": "^0.0.23",
+    "framer-motion": "^10.18.0",
+    "lodash-es": "^4.17.21",
     "lucide-react": "^0.292.0",
     "next": "14.0.0",
+    "next-themes": "^0.4.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "tailwind-merge": "^2.0.0"
+    "react-hot-toast": "^2.5.1",
+    "react-intersection-observer": "^9.15.1",
+    "react-share": "^5.2.0",
+    "react-use": "^17.6.0",
+    "react-zoom-pan-pinch": "^3.7.0",
+    "sharp": "^0.33.5",
+    "sonner": "^1.7.4",
+    "tailwind-merge": "^2.0.0",
+    "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
     "@tailwindcss/aspect-ratio": "^0.4.2",
