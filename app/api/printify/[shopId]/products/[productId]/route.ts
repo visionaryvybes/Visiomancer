@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { headers } from 'next/headers'
 
 export async function GET(
   request: Request,
@@ -7,16 +8,25 @@ export async function GET(
   try {
     const { shopId, productId } = params
     const token = process.env.PRINTIFY_API_TOKEN
+    const headersList = headers()
+    const origin = headersList.get('origin') || '*'
 
     if (!token) {
       return NextResponse.json(
         { error: 'Printify API token not configured' },
-        { status: 500 }
+        { 
+          status: 500,
+          headers: {
+            'Access-Control-Allow-Origin': origin,
+            'Access-Control-Allow-Methods': 'GET, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+          }
+        }
       )
     }
 
     const response = await fetch(
-      `https://api.printify.com/v1/shops/${shopId}/products/${productId}.json`,
+      `https://api.printify.com/v1/shops/${shopId}/products/${productId}`,
       {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -29,7 +39,14 @@ export async function GET(
       const errorText = await response.text()
       return NextResponse.json(
         { error: `Printify API error: ${response.status} ${response.statusText}`, details: errorText },
-        { status: response.status }
+        { 
+          status: response.status,
+          headers: {
+            'Access-Control-Allow-Origin': origin,
+            'Access-Control-Allow-Methods': 'GET, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+          }
+        }
       )
     }
 
@@ -44,12 +61,40 @@ export async function GET(
       }))
     }
 
-    return NextResponse.json(transformedData)
+    return NextResponse.json(transformedData, {
+      headers: {
+        'Access-Control-Allow-Origin': origin,
+        'Access-Control-Allow-Methods': 'GET, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      }
+    })
   } catch (error) {
     console.error('Error fetching product:', error)
     return NextResponse.json(
       { error: 'Failed to fetch product' },
-      { status: 500 }
+      { 
+        status: 500,
+        headers: {
+          'Access-Control-Allow-Origin': origin,
+          'Access-Control-Allow-Methods': 'GET, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        }
+      }
     )
   }
+}
+
+// Handle OPTIONS request for CORS
+export async function OPTIONS(request: Request) {
+  const headersList = headers()
+  const origin = headersList.get('origin') || '*'
+
+  return new NextResponse(null, {
+    status: 204,
+    headers: {
+      'Access-Control-Allow-Origin': origin,
+      'Access-Control-Allow-Methods': 'GET, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    },
+  })
 } 

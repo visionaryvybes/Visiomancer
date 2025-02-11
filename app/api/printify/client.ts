@@ -34,8 +34,8 @@ export class PrintifyClient {
     if (!this.token) {
       throw new Error('Printify API token is required')
     }
-    this.baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
-    this.shopId = process.env.NEXT_PUBLIC_PRINTIFY_SHOP_ID || '18831932'
+    this.baseUrl = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000'
+    this.shopId = process.env.NEXT_PUBLIC_PRINTIFY_SHOP_ID || '204284'
     this.isServer = typeof window === 'undefined'
   }
 
@@ -50,16 +50,21 @@ export class PrintifyClient {
         'Accept': 'application/json',
       }
 
-      // If running on server side, make direct API calls
+      // Always use direct API calls for server-side
       if (this.isServer) {
         url = `https://api.printify.com/v1${endpoint}`
-        headers['Authorization'] = `Bearer ${this.token}`
+        headers = {
+          ...headers,
+          'Authorization': `Bearer ${this.token}`,
+          'User-Agent': 'Visiomancer/1.0'
+        }
       } else {
         // If running on client side, proxy through Next.js API routes
         url = `${this.baseUrl}/api/printify${endpoint}`
       }
 
       console.log(`[Printify] Full URL:`, url)
+      console.log(`[Printify] Headers:`, headers)
       
       const response = await fetch(url, {
         ...options,
@@ -89,56 +94,68 @@ export class PrintifyClient {
       id: string
       title: string
       sales_channel: string
-    }>>('/shops.json')
+    }>>('/shops')
   }
 
   async getProducts(limit = 25) {
     console.log(`[Printify] Fetching products for shop ${this.shopId}`)
-    const response = await this.request<{
-      current_page: number
-      data: Array<{
-        id: string
-        title: string
-        description: string
-        images: Array<{ src: string }>
-        variants: Array<{
+    try {
+      // First verify the shop exists
+      const shops = await this.getShops()
+      console.log('[Printify] Available shops:', shops)
+      
+      if (!shops.some(shop => shop.id === this.shopId)) {
+        throw new Error(`Shop ${this.shopId} not found in available shops`)
+      }
+
+      const response = await this.request<{
+        current_page: number
+        data: Array<{
           id: string
           title: string
-          price: number
-          is_enabled: boolean
-          options: Record<string, string>
+          description: string
+          images: Array<{ src: string }>
+          variants: Array<{
+            id: string
+            title: string
+            price: number
+            is_enabled: boolean
+            options: Record<string, string>
+          }>
+          options: Array<{
+            name: string
+            values: string[]
+          }>
         }>
-        options: Array<{
-          name: string
-          values: string[]
-        }>
-      }>
-      last_page: number
-      total: number
-    }>(`/shops/${this.shopId}/products.json?limit=${limit}`)
+        last_page: number
+        total: number
+      }>(`/shops/${this.shopId}/products`)
 
-    return {
-      data: response.data.map(product => ({
-        ...product,
-        options: product.options || [],
-        variants: product.variants.map(variant => ({
-          ...variant,
-          price: variant.price / 100, // Convert cents to dollars
-          options: variant.options || {},
-          is_enabled: variant.is_enabled || true
-        }))
-      })),
-      total: response.total,
-      current_page: response.current_page,
-      last_page: response.last_page
+      return {
+        data: response.data.map(product => ({
+          ...product,
+          options: product.options || [],
+          variants: product.variants.map(variant => ({
+            ...variant,
+            price: variant.price / 100, // Convert cents to dollars
+            options: variant.options || {},
+            is_enabled: variant.is_enabled || true
+          }))
+        })),
+        total: response.total,
+        current_page: response.current_page,
+        last_page: response.last_page
+      }
+    } catch (error) {
+      console.error('[Printify] Failed to fetch products:', error)
+      throw error
     }
   }
 
   async getProduct(productId: string) {
     console.log(`[Printify] Fetching product ${productId}`)
     try {
-      // Always use the API route for consistency
-      const url = `${this.baseUrl}/api/printify/shops/${this.shopId}/products/${productId}.json`
+      const url = `${this.baseUrl}/api/printify/shops/${this.shopId}/products/${productId}`
       
       console.log(`[Printify] Making request to: ${url}`)
       
@@ -210,7 +227,7 @@ export class PrintifyClient {
           unit: string
         }
       }>
-    }>(`/shops/${shopId}/shipping.json`, {
+    }>(`/shops/${shopId}/shipping`, {
       method: 'POST',
       body: JSON.stringify({ address }),
     })

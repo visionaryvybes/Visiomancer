@@ -1,11 +1,17 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import RootLayoutClient from '../components/RootLayoutClient'
+import { Inter } from 'next/font/google'
+
+const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'VISIOMANCER - Unique Art & Design Products',
   description: 'Discover unique art prints, posters, and wall art at VISIOMANCER. Premium quality products with worldwide shipping.',
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'),
+  icons: {
+    icon: '/favicon.svg',
+  },
   openGraph: {
     type: 'website',
     locale: 'en_US',
@@ -57,7 +63,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <RootLayoutClient>{children}</RootLayoutClient>
+      <body className={inter.className}>
+        <RootLayoutClient>{children}</RootLayoutClient>
+      </body>
     </html>
   )
 } 

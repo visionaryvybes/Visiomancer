@@ -20,7 +20,7 @@ export async function GET(
 
     // Reconstruct the path
     const path = params.path.join('/')
-    const url = `${PRINTIFY_API_URL}/${path}`
+    const url = `${PRINTIFY_API_URL}/${path}.json`
 
     console.log(`[Printify API Route] Forwarding GET request to: ${url}`)
 
@@ -30,6 +30,7 @@ export async function GET(
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
         'Accept': 'application/json',
+        'User-Agent': 'Visiomancer/1.0'
       },
       next: { revalidate: 60 }, // Cache for 60 seconds
     })
@@ -105,7 +106,7 @@ export async function POST(
     }
 
     const path = params.path.join('/')
-    const url = `${PRINTIFY_API_URL}/${path}`
+    const url = `${PRINTIFY_API_URL}/${path}.json`
     
     console.log(`[Printify API Route] Forwarding POST request to: ${url}`)
     
