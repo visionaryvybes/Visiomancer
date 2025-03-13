@@ -9,58 +9,37 @@ export async function GET(
   { params }: { params: { path: string[] } }
 ) {
   try {
-    const token = process.env.PRINTIFY_API_TOKEN
-    if (!token) {
-      console.error('[Printify API Route] No API token configured')
-      return NextResponse.json(
-        { error: 'Printify API token not configured' },
-        { status: 500 }
-      )
+    const apiKey = process.env.PRINTIFY_API_TOKEN
+    if (!apiKey) {
+      throw new Error('PRINTIFY_API_TOKEN is not set')
     }
 
-    // Reconstruct the path
     const path = params.path.join('/')
-    const url = `${PRINTIFY_API_URL}/${path}.json`
+    const url = `${PRINTIFY_API_URL}/${path}`
 
-    console.log(`[Printify API Route] Forwarding GET request to: ${url}`)
+    console.log('Fetching from Printify:', url)
 
     const response = await fetch(url, {
-      method: 'GET',
       headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'User-Agent': 'Visiomancer/1.0'
-      },
-      next: { revalidate: 60 }, // Cache for 60 seconds
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      }
     })
 
     if (!response.ok) {
-      const errorText = await response.text()
-      console.error(`[Printify API Route] Error response (${response.status}):`, errorText)
-      
-      // Handle specific error cases
-      if (response.status === 404) {
-        return NextResponse.json(
-          { error: 'Product not found', details: errorText },
-          { status: 404 }
-        )
-      }
-      
-      if (response.status === 401) {
-        return NextResponse.json(
-          { error: 'Unauthorized - Invalid API token', details: errorText },
-          { status: 401 }
-        )
-      }
-      
-      return NextResponse.json(
-        { error: `Printify API error: ${response.status} ${response.statusText}`, details: errorText },
-        { status: response.status }
-      )
+      throw new Error(`Printify API error: ${response.status} ${response.statusText}`)
     }
 
     const data = await response.json()
+    console.log('Printify API response:', {
+      path,
+      variants: data.variants?.map((v: any) => ({
+        title: v.title,
+        options: v.options,
+        price: v.price,
+        is_enabled: v.is_enabled
+      }))
+    })
 
     // Transform prices from cents to dollars if needed
     if (path.includes('/products/')) {
@@ -84,9 +63,9 @@ export async function GET(
 
     return NextResponse.json(data)
   } catch (error) {
-    console.error('[Printify API Route] Error:', error)
+    console.error('Error in Printify API route:', error)
     return NextResponse.json(
-      { error: 'Internal server error', details: error instanceof Error ? error.message : String(error) },
+      { error: 'Failed to fetch from Printify API' },
       { status: 500 }
     )
   }

@@ -8,7 +8,9 @@ import { useCart } from "../../context/CartContext"
 import { WarpBackground } from "../../components/ui/warp-background"
 
 export default function CartPage() {
-  const { items, removeItem, updateQuantity, total, itemCount } = useCart()
+  const { items, removeFromCart, updateQuantity, getCartTotal } = useCart()
+  const total = getCartTotal()
+  const itemCount = items.reduce((count, item) => count + (item.quantity || 1), 0)
 
   if (items.length === 0) {
     return (
@@ -60,10 +62,10 @@ export default function CartPage() {
                         <div className="flex justify-between">
                           <div>
                             <h3 className="font-medium">{item.title}</h3>
-                            <p className="text-sm text-muted-foreground">{item.variantTitle}</p>
+                            <p className="text-sm text-muted-foreground">Variant: {item.variantId}</p>
                           </div>
                           <button
-                            onClick={() => removeItem(item.id, item.variantId)}
+                            onClick={() => removeFromCart(item.id, item.variantId)}
                             className="text-muted-foreground hover:text-destructive"
                           >
                             <Trash2 className="h-5 w-5" />
@@ -73,21 +75,27 @@ export default function CartPage() {
                         <div className="mt-2 flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <button
-                              onClick={() => updateQuantity(item.id, item.variantId, item.quantity - 1)}
+                              onClick={() => {
+                                const newQuantity = Math.max(1, (item.quantity || 1) - 1);
+                                updateQuantity(item.id, item.variantId, newQuantity);
+                              }}
                               className="rounded-md border p-1 hover:bg-accent"
-                              disabled={item.quantity <= 1}
+                              disabled={(item.quantity || 1) <= 1}
                             >
                               <Minus className="h-4 w-4" />
                             </button>
-                            <span className="w-8 text-center">{item.quantity}</span>
+                            <span className="w-8 text-center">{item.quantity || 1}</span>
                             <button
-                              onClick={() => updateQuantity(item.id, item.variantId, item.quantity + 1)}
+                              onClick={() => {
+                                const newQuantity = (item.quantity || 1) + 1;
+                                updateQuantity(item.id, item.variantId, newQuantity);
+                              }}
                               className="rounded-md border p-1 hover:bg-accent"
                             >
                               <Plus className="h-4 w-4" />
                             </button>
                           </div>
-                          <p className="font-medium">${(item.price * item.quantity).toFixed(2)}</p>
+                          <p className="font-medium">${(item.price * (item.quantity || 1)).toFixed(2)}</p>
                         </div>
                       </div>
                     </div>

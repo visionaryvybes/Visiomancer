@@ -17,18 +17,24 @@ function ImageGalleryContent({ images, title }: ImageGalleryProps) {
     images[currentIndex]?.src
   )
 
+  const uniqueImages = Array.from(new Set(images.map(img => img.src))).map(src => ({ src }))
+
   const handlePrevious = () => {
-    setCurrentIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1))
+    setCurrentIndex((prev) => (prev === 0 ? uniqueImages.length - 1 : prev - 1))
   }
 
   const handleNext = () => {
-    setCurrentIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1))
+    setCurrentIndex((prev) => (prev === uniqueImages.length - 1 ? 0 : prev + 1))
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'ArrowLeft') handlePrevious()
     if (e.key === 'ArrowRight') handleNext()
     if (e.key === 'Escape') setIsZoomed(false)
+  }
+
+  const handleThumbnailClick = (index: number) => {
+    setCurrentIndex(index)
   }
 
   if (error) {
@@ -49,10 +55,10 @@ function ImageGalleryContent({ images, title }: ImageGalleryProps) {
           </div>
         )}
         <Image
-          src={images[currentIndex]?.src || '/placeholder.jpg'}
+          src={uniqueImages[currentIndex]?.src || '/placeholder.jpg'}
           alt={`${title} - View ${currentIndex + 1}`}
           fill
-          className={`object-contain p-6 transition-opacity duration-300 ${
+          className={`object-contain p-4 transition-opacity duration-300 ${
             isLoading ? 'opacity-0' : 'opacity-100'
           }`}
           sizes="(max-width: 768px) 100vw, 50vw"
@@ -71,36 +77,36 @@ function ImageGalleryContent({ images, title }: ImageGalleryProps) {
         </button>
 
         {/* Navigation Buttons */}
-        {images.length > 1 && (
+        {uniqueImages.length > 1 && (
           <>
             <button
               onClick={handlePrevious}
-              className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-black/80 p-2 text-white hover:bg-black transition-colors"
+              className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-black/50 p-2 text-white hover:bg-black/70 transition-colors"
               aria-label="Previous image"
             >
-              <ChevronLeft className="h-5 w-5" />
+              <ChevronLeft className="h-6 w-6" />
             </button>
             <button
               onClick={handleNext}
-              className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-black/80 p-2 text-white hover:bg-black transition-colors"
+              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-black/50 p-2 text-white hover:bg-black/70 transition-colors"
               aria-label="Next image"
             >
-              <ChevronRight className="h-5 w-5" />
+              <ChevronRight className="h-6 w-6" />
             </button>
           </>
         )}
       </div>
 
-      {/* Thumbnail Grid */}
-      {images.length > 1 && (
+      {/* Thumbnails */}
+      {uniqueImages.length > 1 && (
         <div className="grid grid-cols-4 gap-4">
-          {images.map((image, index) => {
+          {uniqueImages.map((image, index) => {
             const { isLoading: thumbLoading, handleLoad: handleThumbLoad, handleError: handleThumbError } = useImageLoader(image.src)
             
             return (
               <button
                 key={index}
-                onClick={() => setCurrentIndex(index)}
+                onClick={() => handleThumbnailClick(index)}
                 className={`relative aspect-square overflow-hidden rounded-lg bg-white transition-all ${
                   currentIndex === index 
                     ? 'ring-2 ring-blue-500' 
@@ -155,7 +161,7 @@ function ImageGalleryContent({ images, title }: ImageGalleryProps) {
             >
               <div className="relative h-full w-full">
                 <Image
-                  src={images[currentIndex]?.src || '/placeholder.jpg'}
+                  src={uniqueImages[currentIndex]?.src || '/placeholder.jpg'}
                   alt={`${title} - Zoomed View`}
                   fill
                   className="object-contain"
@@ -167,7 +173,7 @@ function ImageGalleryContent({ images, title }: ImageGalleryProps) {
           </TransformWrapper>
 
           {/* Navigation in Zoom View */}
-          {images.length > 1 && (
+          {uniqueImages.length > 1 && (
             <>
               <button
                 onClick={handlePrevious}

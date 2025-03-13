@@ -1,10 +1,8 @@
 import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { PrintifyClient } from '@/app/api/printify/client'
+import ProductContent from '@/components/ProductContent'
 import { type PrintifyImage } from '@/types'
-import dynamic from 'next/dynamic'
-
-const ProductPageClient = dynamic(() => import('./ProductPageClient'))
 
 interface ProductPageProps {
   params: {
@@ -47,14 +45,11 @@ export default async function ProductPage({ params }: ProductPageProps) {
     notFound()
   }
 
-  console.log('Server-side product data:', {
-    variants: product.variants.map(v => ({
-      title: v.title,
-      options: v.options,
-      price: v.price,
-      is_enabled: v.is_enabled
-    }))
-  })
-
-  return <ProductPageClient initialProduct={product} />
+  return (
+    <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="py-16">
+        <ProductContent product={product} />
+      </div>
+    </main>
+  )
 } 

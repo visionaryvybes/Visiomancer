@@ -1,13 +1,13 @@
 import type { Metadata } from 'next'
-import './globals.css'
-import RootLayoutClient from '../components/RootLayoutClient'
 import { Inter } from 'next/font/google'
+import './globals.css'
+import RootLayoutClient from '@/components/RootLayoutClient'
 
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'VISIOMANCER - Unique Art & Design Products',
-  description: 'Discover unique art prints, posters, and wall art at VISIOMANCER. Premium quality products with worldwide shipping.',
+  title: 'VISIOMANCER',
+  description: 'Premium art prints and merchandise.',
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'),
   icons: {
     icon: '/favicon.svg',
@@ -62,9 +62,11 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className="dark" suppressHydrationWarning>
       <body className={inter.className}>
-        <RootLayoutClient>{children}</RootLayoutClient>
+        <RootLayoutClient>
+          {children}
+        </RootLayoutClient>
       </body>
     </html>
   )
