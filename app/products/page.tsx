@@ -2,10 +2,22 @@
 
 import React, { useState } from "react"
 import Link from "next/link"
+import { useRouter, useSearchParams } from "next/navigation"
 import { WarpBackground } from "../../components/ui/warp-background"
 import ProductCard from "../../components/ProductCard"
 import { motion } from "framer-motion"
 import type { PrintifyProduct as Product } from '../api/printify/client'
+
+// Helper function for safe logging (only in development)
+const safeLog = (message: string, data?: any) => {
+  if (process.env.NODE_ENV !== 'production') {
+    if (data !== undefined) {
+      console.log(message, data);
+    } else {
+      console.log(message);
+    }
+  }
+};
 
 // Define category keywords for filtering
 const categoryKeywords = {
@@ -32,6 +44,7 @@ export default function ProductsPage({
 }: {
   searchParams: { [key: string]: string | string[] | undefined }
 }) {
+  const router = useRouter()
   const [products, setProducts] = React.useState<Product[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -44,7 +57,7 @@ export default function ProductsPage({
       try {
         setIsLoading(true)
         setError(null)
-        console.log('Fetching products from API...')
+        safeLog('Fetching products from API...')
         const response = await fetch('/api/products')
         
         if (!response.ok) {
@@ -58,16 +71,16 @@ export default function ProductsPage({
         }
         
         const data = await response.json()
-        console.log('API response data:', data)
+        safeLog('API response data:', data)
         
         // Ensure we're getting the products array from the correct property
         const productsArray = data.data || []
         
-        console.log('Fetched products:', productsArray)
-        console.log('Products count:', productsArray.length)
+        safeLog('Fetched products:', productsArray)
+        safeLog('Products count:', productsArray.length)
         
         if (productsArray.length === 0) {
-          console.warn('No products returned from API')
+          safeLog('No products returned from API')
           // Create a dummy product for testing if no products are returned
           const dummyProduct = {
             id: 'dummy-product',
@@ -88,7 +101,7 @@ export default function ProductsPage({
           setIsLoading(false)
           return
         } else {
-          console.log('First product sample:', {
+          safeLog('First product sample:', {
             id: productsArray[0]?.id,
             title: productsArray[0]?.title,
             hasImages: productsArray[0]?.images?.length > 0,
@@ -116,7 +129,7 @@ export default function ProductsPage({
             return keywords.some(keyword => titleAndDesc.includes(keyword.toLowerCase()))
           })
           
-          console.log(`Filtered products for category "${category}":`, filteredProducts.length)
+          safeLog(`Filtered products for category "${category}":`, filteredProducts.length)
         }
 
         // Sort products if specified
@@ -188,9 +201,22 @@ export default function ProductsPage({
                 className="rounded-lg border border-white/10 bg-black/20 px-2 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm text-white flex-grow md:flex-grow-0"
                 value={searchParams.sort || ''}
                 onChange={(e) => {
-                  const url = new URL(window.location.href)
-                  url.searchParams.set('sort', e.target.value)
-                  window.location.href = url.toString()
+                  const value = e.target.value;
+                  const url = new URL(window.location.href);
+                  
+                  if (value) {
+                    url.searchParams.set('sort', value);
+                  } else {
+                    url.searchParams.delete('sort');
+                  }
+                  
+                  // Preserve category if it exists
+                  if (activeCategory) {
+                    url.searchParams.set('category', activeCategory);
+                  }
+                  
+                  // Use Next.js router instead of direct window.location
+                  router.push(url.pathname + url.search);
                 }}
               >
                 <option value="">Featured</option>

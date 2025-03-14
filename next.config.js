@@ -3,17 +3,18 @@ const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
   images: {
-    unoptimized: true,
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: '**.printify.com',
-        pathname: '/**',
-      },
+    domains: [
+      'images.printify.com',
+      'printify.com',
+      'cdn.printify.com',
+      'images-cdn.printify.com',
+      'images.unsplash.com',
+      'res.cloudinary.com'
     ],
+    unoptimized: process.env.NODE_ENV === 'development',
   },
   experimental: {
-    optimizeCss: true,
+    serverActions: true,
   },
 }
 

@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { useCart } from '../../context/CartContext'
 import { WarpBackground } from '../../components/ui/warp-background'
 import { toast } from 'sonner'
@@ -92,10 +93,12 @@ export default function CheckoutPage() {
                     className="flex items-center gap-3 sm:gap-4 border-b border-white/10 pb-3 sm:pb-4 last:border-0"
                   >
                     <div className="relative h-16 w-16 sm:h-20 sm:w-20 flex-shrink-0 overflow-hidden rounded-lg bg-white">
-                      <img
+                      <Image
                         src={item.image}
                         alt={item.title}
-                        className="h-full w-full object-contain p-2"
+                        fill
+                        className="object-contain p-2"
+                        sizes="(max-width: 640px) 64px, 80px"
                       />
                     </div>
                     <div className="flex-1">

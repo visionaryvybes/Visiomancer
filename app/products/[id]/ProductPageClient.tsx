@@ -29,6 +29,13 @@ interface Product {
   }>
 }
 
+// Helper function for safe logging (only in development)
+const safeLog = (message: string, data: any) => {
+  if (process.env.NODE_ENV !== 'production') {
+    console.log(message, data);
+  }
+};
+
 export default function ProductPageClient({ initialProduct }: ProductPageClientProps) {
   const [product] = React.useState<Product>(initialProduct)
   const [selectedSize, setSelectedSize] = React.useState<string>('')
@@ -40,7 +47,7 @@ export default function ProductPageClient({ initialProduct }: ProductPageClientP
 
   // Debug: Log the initial product data
   React.useEffect(() => {
-    console.log('Initial product:', {
+    safeLog('Initial product:', {
       variants: product.variants.map(v => ({
         title: v.title,
         options: v.options,
@@ -48,7 +55,7 @@ export default function ProductPageClient({ initialProduct }: ProductPageClientP
         is_enabled: v.is_enabled
       })),
       options: product.options
-    })
+    });
   }, [product])
 
   // Get available sizes and their variants
@@ -77,7 +84,7 @@ export default function ProductPageClient({ initialProduct }: ProductPageClientP
       })
       .filter((v): v is { size: string; variant: Variant } => v !== null)
 
-    console.log('Filtered size variants:', variants)
+    safeLog('Filtered size variants:', variants)
     return variants
   }, [product.variants])
 
@@ -85,21 +92,21 @@ export default function ProductPageClient({ initialProduct }: ProductPageClientP
   React.useEffect(() => {
     if (!selectedSize && sizeVariants.length > 0) {
       setSelectedSize(sizeVariants[0].size)
-      console.log('Setting initial size:', sizeVariants[0].size)
+      safeLog('Setting initial size:', sizeVariants[0].size)
     }
   }, [sizeVariants, selectedSize])
 
   // Get the selected variant based on size
   const selectedVariant = React.useMemo(() => {
     const variant = sizeVariants.find(sv => sv.size === selectedSize)?.variant
-    console.log('Selected variant:', variant)
+    safeLog('Selected variant:', variant)
     return variant || null
   }, [sizeVariants, selectedSize])
 
   // Price display section update
   const priceDisplay = React.useMemo(() => {
     const price = selectedVariant?.price.toFixed(2) || '0.00'
-    console.log('Price display:', price)
+    safeLog('Price display:', price)
     return price
   }, [selectedVariant])
 

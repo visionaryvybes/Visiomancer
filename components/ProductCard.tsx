@@ -36,6 +36,13 @@ const formatPrice = (price: number): string => {
   }).format(price);
 };
 
+// Helper function for safe logging (only in development)
+const safeLog = (message: string, data: any) => {
+  if (process.env.NODE_ENV !== 'production') {
+    console.log(message, data);
+  }
+};
+
 function cleanDescription(description: string, productTitle: string): string {
   // Remove the size guide table and any empty paragraphs
   let cleaned = description
@@ -69,15 +76,15 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
   const router = useRouter()
   const [isWishlisted, setIsWishlisted] = React.useState(false)
 
-  // Log the raw product data for debugging
-  console.log('ProductCard received product:', {
+  // Log the raw product data for debugging (only in development)
+  safeLog('ProductCard received product:', {
     id: product?.id,
     title: product?.title,
     hasImages: product?.images?.length > 0,
     hasVariants: product?.variants?.length > 0,
     imageCount: product?.images?.length,
     variantCount: product?.variants?.length
-  })
+  });
 
   // Ensure product has all required properties with fallbacks
   const safeProduct = {
@@ -90,7 +97,7 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
 
   // Validate that the product has all required data
   const isValidProduct = React.useMemo(() => {
-    // Log validation details for debugging
+    // Log validation details for debugging (only in development)
     const validationDetails = {
       hasId: !!safeProduct.id,
       hasTitle: !!safeProduct.title,
@@ -100,19 +107,19 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
       imagesCount: safeProduct.images.length,
       variantsCount: safeProduct.variants.length,
       enabledVariantsCount: safeProduct.variants.filter(v => v.is_enabled && v.price > 0).length
-    }
+    };
 
     // More lenient validation - only require ID and title
     if (!validationDetails.hasId || !validationDetails.hasTitle) {
-      console.warn('Product validation failed:', {
+      safeLog('Product validation failed:', {
         productId: safeProduct.id,
         validationDetails
-      })
-      return false
+      });
+      return false;
     }
 
-    return true
-  }, [safeProduct])
+    return true;
+  }, [safeProduct]);
 
   // If the product is invalid, don't render anything
   if (!isValidProduct) {
@@ -126,10 +133,10 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
     const filteredImages = safeProduct.images
       .filter(image => {
         if (!image || !image.src) {
-          console.warn('Invalid image found for product:', safeProduct.id)
-          return false
+          safeLog('Invalid image found for product:', safeProduct.id);
+          return false;
         }
-        return true
+        return true;
       })
       // Only keep images with "front" or "main" in the URL, which are typically the main product images
       .filter(image => 
@@ -144,25 +151,25 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
       // Remove duplicates
       .filter((image, index, self) => 
         index === self.findIndex((t) => t.src === image.src)
-      )
+      );
 
-    // Log the filtered images for debugging
-    console.log('Filtered images for product:', {
+    // Log the filtered images for debugging (only in development)
+    safeLog('Filtered images for product:', {
       productId: safeProduct.id,
       originalCount: safeProduct.images.length,
       filteredCount: filteredImages.length,
       firstImageUrl: filteredImages[0]?.src
-    })
+    });
 
     if (filteredImages.length === 0) {
-      console.warn('No valid images found for product:', {
+      safeLog('No valid images found for product:', {
         productId: safeProduct.id,
         originalImagesCount: safeProduct.images.length
-      })
+      });
     }
 
-    return filteredImages
-  }, [safeProduct.images, safeProduct.id])
+    return filteredImages;
+  }, [safeProduct.images, safeProduct.id]);
 
   // Get unique sizes and sort them by dimensions
   const sizes = React.useMemo(() => {
@@ -310,7 +317,6 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
             priority={priority}
             className="object-contain p-4 transition-transform duration-500 group-hover:scale-110"
             sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-            unoptimized={true}
           />
         </div>
 
