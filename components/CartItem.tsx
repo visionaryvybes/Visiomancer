@@ -27,7 +27,7 @@ export default function CartItem({
   variantId,
   variantTitle
 }: CartItemProps) {
-  const { updateQuantity, removeItem } = useCart()
+  const { updateQuantity, removeFromCart } = useCart()
   const [imageError, setImageError] = useState(false)
   const [imageLoading, setImageLoading] = useState(true)
 
@@ -37,7 +37,7 @@ export default function CartItem({
   }
 
   const handleRemove = () => {
-    removeItem(id, variantId)
+    removeFromCart(id, variantId)
   }
 
   const getImageUrl = () => {
