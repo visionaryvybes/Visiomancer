@@ -4,6 +4,11 @@ import { PrintifyClient } from '@/app/api/printify/client'
 import { type PrintifyImage } from '@/types'
 import dynamic from 'next/dynamic'
 
+// Mark this page as dynamic to prevent static generation attempts
+export const dynamicParams = true;
+export const fetchCache = 'force-no-store';
+export const revalidate = 0;
+
 const ProductPageClient = dynamic(() => import('./ProductPageClient'))
 
 interface ProductPageProps {
@@ -48,7 +53,12 @@ export default async function ProductPage({ params }: ProductPageProps) {
   }
 
   console.log('Server-side product data:', {
-    variants: product.variants.map(v => ({
+    variants: product.variants.map((v: {
+      title: string;
+      options: Record<string, string>;
+      price: number;
+      is_enabled: boolean;
+    }) => ({
       title: v.title,
       options: v.options,
       price: v.price,

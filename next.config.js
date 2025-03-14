@@ -16,6 +16,22 @@ const nextConfig = {
   experimental: {
     serverActions: true,
   },
+  env: {
+    PRINTIFY_API_TOKEN: process.env.PRINTIFY_API_TOKEN,
+    NEXT_PUBLIC_PRINTIFY_SHOP_ID: process.env.NEXT_PUBLIC_PRINTIFY_SHOP_ID,
+    NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
+  },
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        net: false,
+        tls: false,
+      };
+    }
+    return config;
+  },
 }
 
 module.exports = nextConfig 
