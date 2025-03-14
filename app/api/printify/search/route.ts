@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
 
+// Mark this route as dynamic to prevent static generation attempts
+export const dynamic = 'force-dynamic';
+
 const PRINTIFY_API_URL = 'https://api.printify.com/v1';
 
 async function fetchPrintify(endpoint: string, options: RequestInit = {}) {

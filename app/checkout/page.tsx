@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { useCart } from '../../context/CartContext'
@@ -38,8 +38,15 @@ export default function CheckoutPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [shippingInfo, setShippingInfo] = useState<ShippingInfo>(initialShippingInfo)
 
+  // Use useEffect for client-side navigation
+  useEffect(() => {
+    if (items.length === 0) {
+      router.push('/products')
+    }
+  }, [items.length, router])
+
+  // If cart is empty, return null (will redirect in useEffect)
   if (items.length === 0) {
-    router.push('/products')
     return null
   }
 

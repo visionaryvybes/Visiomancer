@@ -8,6 +8,9 @@ import ProductCard from "../../components/ProductCard"
 import { motion } from "framer-motion"
 import type { PrintifyProduct as Product } from '../api/printify/client'
 
+// Mark this page as dynamic to prevent static generation attempts
+export const dynamic = 'force-dynamic';
+
 // Helper function for safe logging (only in development)
 const safeLog = (message: string, data?: any) => {
   if (process.env.NODE_ENV !== 'production') {
