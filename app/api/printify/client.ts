@@ -22,7 +22,7 @@ export interface PrintifyResponse {
 
 export class PrintifyClient {
   private readonly apiToken: string
-  private readonly shopId: string = '18831932'
+  public readonly shopId: string = '18831932'
   private readonly baseUrl = 'https://api.printify.com/v1'
 
   constructor(apiToken?: string) {

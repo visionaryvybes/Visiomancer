@@ -1,47 +1,19 @@
 {
-  "buildCommand": "next build",
-  "installCommand": "npm install",
-  "framework": "nextjs",
-  "outputDirectory": ".next",
-  "regions": ["iad1"],
-  "env": {
-    "PRINTIFY_API_TOKEN": "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIzN2Q0YmQzMDM1ZmUxMWU5YTgwM2FiN2VlYjNjY2M5NyIsImp0aSI6ImJlZmE0NTFiMjllZDdlYmYxOWZlNGU3NDRmZWVhZjhhN2NhZDEyNWIxOTBiNWE1YjYwNTk1MGIwZmRmN2YyNzk0MGU5NzUzNDQzMGMwNzdkIiwiaWF0IjoxNzM5Mjk0NDk1LjYxNzYxNiwibmJmIjoxNzM5Mjk0NDk1LjYxNzYxOCwiZXhwIjoxNzcwODMwNDk1LjYxMDc5Niwic3ViIjoiMjA0Mjg0OTkiLCJzY29wZXMiOlsic2hvcHMubWFuYWdlIiwic2hvcHMucmVhZCIsImNhdGFsb2cucmVhZCIsIm9yZGVycy5yZWFkIiwib3JkZXJzLndyaXRlIiwicHJvZHVjdHMucmVhZCIsInByb2R1Y3RzLndyaXRlIiwid2ViaG9va3MucmVhZCIsIndlYmhvb2tzLndyaXRlIiwidXBsb2Fkcy5yZWFkIiwidXBsb2Fkcy53cml0ZSIsInByaW50X3Byb3ZpZGVycy5yZWFkIiwidXNlci5pbmZvIl19.AjBCGgaLrtJPNCMV5LHl0nLWJHUlZgt883enP_dLu0jdT6sgpQZWNImgqpcjhpeJLjhQ4ZRaAFMNnhOEo6s",
-    "NEXT_PUBLIC_PRINTIFY_SHOP_ID": "204284",
-    "NEXT_PUBLIC_SITE_URL": "https://visiomancer.vercel.app"
+  "buildCommand": "npm run build",
+  "cleanUrls": true,
+  "functions": {
+    "app/api/**/*.ts": {
+      "memory": 1024,
+      "maxDuration": 300
+    }
   },
   "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        {
-          "key": "X-Content-Type-Options",
-          "value": "nosniff"
-        },
-        {
-          "key": "X-Frame-Options",
-          "value": "DENY"
-        },
-        {
-          "key": "X-XSS-Protection",
-          "value": "1; mode=block"
-        }
-      ]
-    },
     {
       "source": "/api/(.*)",
       "headers": [
         {
           "key": "Cache-Control",
-          "value": "no-store, max-age=0"
-        }
-      ]
-    },
-    {
-      "source": "/_next/image(.*)",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=31536000, immutable"
+          "value": "public, max-age=0, must-revalidate"
         }
       ]
     }

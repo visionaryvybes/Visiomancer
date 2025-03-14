@@ -4,6 +4,9 @@ import { PrintifyClient } from '../client';
 // Base64 encoded placeholder image (1x1 pixel transparent PNG)
 const PLACEHOLDER_IMAGE = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
 
+export const maxDuration = 300; // Set max duration to 5 minutes
+export const dynamic = 'force-dynamic'; // Disable static generation
+
 export async function GET(request: Request) {
   try {
     const token = process.env.PRINTIFY_API_TOKEN;
@@ -13,55 +16,41 @@ export async function GET(request: Request) {
 
     console.log('Initializing Printify client...');
     const client = new PrintifyClient(token);
-
-    // Get the first shop
-    console.log('Fetching shops...');
-    const shopsResponse = await client.getShops();
-    console.log('Shops response:', shopsResponse);
     
-    const shopId = shopsResponse[0]?.id;
-    if (!shopId) {
-      console.error('No shop found in response:', shopsResponse);
-      return NextResponse.json({ error: 'No shop found' }, { status: 404 });
-    }
-
-    console.log('Using shop ID:', shopId);
-
     // Get products for the shop
     console.log('Fetching products...');
-    const productsResponse = await client.getProducts(shopId.toString());
-    console.log(`Found ${productsResponse.data?.length || 0} products`);
+    const productsResponse = await client.getProducts();
+    
+    // Only process first 20 products to prevent timeouts
+    const limitedProducts = productsResponse.data.slice(0, 20);
+    console.log(`Processing ${limitedProducts.length} products...`);
     
     // Get detailed information for each product
     const productsWithDetails = await Promise.all(
-      productsResponse.data.map(async (product) => {
+      limitedProducts.map(async (product: any) => {
         try {
-          console.log(`Fetching details for product ${product.id}...`);
-          const details = await client.getProduct(shopId.toString(), product.id);
+          const details = await client.getProduct(product.id);
+          
+          if (!details) {
+            console.error(`No details found for product ${product.id}`);
+            return null;
+          }
           
           // Process images
-          const images = details.images.map(img => {
+          const images = details.images.map((img: any) => {
             let src = img.src;
             
             if (!src) {
-              console.error('Invalid image URL for product:', details.title);
               return { src: PLACEHOLDER_IMAGE };
             }
 
             try {
-              // Convert http to https
-              src = src.replace(/^http:/, 'https:');
+              src = src.replace(/^http:/, 'https:')
+                      .replace('cdn.printify.com', 'images-api.printify.com')
+                      .replace(/[?&]preview=\d+/, '');
               
-              // Use images-api.printify.com for better reliability
-              src = src.replace('cdn.printify.com', 'images-api.printify.com');
-              
-              // Remove preview parameter as it might be causing issues
-              src = src.replace(/[?&]preview=\d+/, '');
-              
-              console.log('Final processed URL:', src);
               return { src };
             } catch (error) {
-              console.error('Error processing image URL:', error);
               return { src: PLACEHOLDER_IMAGE };
             }
           });
@@ -70,8 +59,8 @@ export async function GET(request: Request) {
             id: details.id,
             title: details.title,
             description: details.description,
-            images,
-            variants: details.variants.map(variant => ({
+            images: images.slice(0, 5), // Limit images to first 5
+            variants: details.variants.map((variant: any) => ({
               id: variant.id,
               title: variant.title,
               price: parseFloat((variant.price / 100).toFixed(2)),
@@ -97,7 +86,7 @@ export async function GET(request: Request) {
     return NextResponse.json({
       data: validProducts,
       total: validProducts.length,
-      shop_id: shopId
+      shop_id: client.shopId
     });
   } catch (error) {
     console.error('Error fetching Printify products:', error);

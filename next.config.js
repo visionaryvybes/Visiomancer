@@ -1,7 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  swcMinify: true,
   images: {
     domains: [
       'images.printify.com',
@@ -12,9 +11,6 @@ const nextConfig = {
       'res.cloudinary.com'
     ],
     unoptimized: process.env.NODE_ENV === 'development',
-  },
-  experimental: {
-    serverActions: true,
   },
   env: {
     PRINTIFY_API_TOKEN: process.env.PRINTIFY_API_TOKEN,

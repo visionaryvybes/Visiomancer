@@ -3,19 +3,12 @@ import { WarpBackground } from '@/components/ui/warp-background'
 
 export default function NotFound() {
   return (
-    <WarpBackground>
-      <div className="container mx-auto px-4 py-24 text-center">
-        <h2 className="text-4xl font-bold mb-4">Page Not Found</h2>
-        <p className="text-lg text-white/70 mb-8">
-          Sorry, we couldn't find the page you're looking for.
-        </p>
-        <Link
-          href="/"
-          className="inline-flex items-center justify-center rounded-md bg-blue-600 px-8 py-3 text-sm font-medium text-white transition-colors hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-black"
-        >
-          Back to Home
-        </Link>
-      </div>
-    </WarpBackground>
+    <div className="flex min-h-screen flex-col items-center justify-center">
+      <h1 className="text-4xl font-bold">404</h1>
+      <p className="mt-4 text-xl">Page not found</p>
+      <a href="/" className="mt-8 text-blue-500 hover:text-blue-700">
+        Return Home
+      </a>
+    </div>
   )
 } 

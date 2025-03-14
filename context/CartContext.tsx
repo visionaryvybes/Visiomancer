@@ -17,6 +17,7 @@ interface CartContextType {
   items: CartItem[]
   addToCart: (item: CartItem) => void
   removeFromCart: (itemId: string, variantId?: string) => void
+  removeItem: (itemId: string, variantId?: string) => void
   updateQuantity: (itemId: string, variantId: string, quantity: number) => void
   clearCart: () => void
   getCartTotal: () => number
@@ -72,6 +73,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     })
   }
 
+  // Alias for backward compatibility
+  const removeItem = removeFromCart;
+
   const updateQuantity = (itemId: string, variantId: string, quantity: number) => {
     if (quantity <= 0) {
       removeFromCart(itemId, variantId)
@@ -105,6 +109,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         items,
         addToCart,
         removeFromCart,
+        removeItem,
         updateQuantity,
         clearCart,
         getCartTotal,
