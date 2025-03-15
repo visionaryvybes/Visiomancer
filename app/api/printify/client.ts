@@ -14,6 +14,7 @@ export interface PrintifyProduct {
     name: string
     values: string[]
   }>
+  tags?: string[]
 }
 
 export interface PrintifyResponse {
@@ -26,152 +27,60 @@ export class PrintifyClient {
   private readonly baseUrl = 'https://api.printify.com/v1'
 
   constructor(apiToken?: string) {
+    console.log('Initializing PrintifyClient...')
     const token = apiToken || process.env.PRINTIFY_API_TOKEN
+    
     if (!token) {
       console.error('No API token provided and PRINTIFY_API_TOKEN environment variable is not set')
       throw new Error('Printify API token is required')
     }
+    
+    // Log token presence and length (safely)
+    console.log('Environment variables available:', Object.keys(process.env))
+    console.log('API Token present:', !!token)
+    console.log('API Token length:', token.length)
+    console.log('API Token first 4 chars:', token.substring(0, 4))
+    
     this.apiToken = token.trim()
   }
 
   async getProducts() {
+    console.log('Attempting to fetch products from Printify...')
+    console.log('Using shop ID:', this.shopId)
+    const url = `${this.baseUrl}/shops/${this.shopId}/products.json`
+    console.log('Fetching from URL:', url)
+    
     try {
-      console.log('Attempting to fetch products from Printify...')
-      console.log('Using shop ID:', this.shopId)
-      
-      const url = `${this.baseUrl}/shops/${this.shopId}/products.json`
-      console.log('Fetching from URL:', url)
-      
       const response = await fetch(url, {
         headers: {
           'Authorization': `Bearer ${this.apiToken}`,
           'Content-Type': 'application/json'
-        },
-        cache: 'no-store'
+        }
       })
 
       if (!response.ok) {
         const errorText = await response.text()
-        console.error('Printify API error:', {
+        const errorDetails = {
           status: response.status,
           statusText: response.statusText,
           error: errorText,
-          url,
-          shopId: this.shopId,
-          hasToken: !!this.apiToken
-        })
-        throw new Error(`Failed to fetch products: ${response.statusText}`)
-      }
-
-      const rawData = await response.json()
-      console.log('Raw Printify API response structure:', Object.keys(rawData))
-      console.log('Raw Printify API response data count:', rawData.data?.length || 0)
-      
-      // Check if we have the expected data structure
-      if (!rawData.data || !Array.isArray(rawData.data)) {
-        console.error('Unexpected API response structure:', rawData)
-        
-        // Create a dummy product for testing
-        const dummyProduct = {
-          id: 'dummy-product',
-          title: 'Sample Product',
-          description: 'This is a sample product for testing purposes.',
-          images: [{ src: '/placeholder.jpg' }],
-          variants: [
-            {
-              id: 'dummy-variant',
-              title: 'Sample Variant',
-              price: 19.99,
-              is_enabled: true,
-              options: {}
-            }
-          ],
-          options: []
+          url: url,
+          headers: Object.fromEntries(response.headers.entries()),
+          hasToken: !!this.apiToken,
+          tokenLength: this.apiToken.length
         }
-        
-        return { data: [dummyProduct] }
+        console.error('Printify API error:', errorDetails)
+        throw new Error(`Printify API error: ${response.status} ${response.statusText} - ${errorText}`)
       }
 
-      // Transform the data to match our expected format
-      const transformedData = {
-        data: (rawData.data || []).map((product: any) => {
-          // Process images to ensure we have valid URLs and prioritize front/main images
-          const processedImages = Array.isArray(product.images) 
-            ? product.images
-                .filter((img: any) => img && img.src)
-                .map((img: any) => ({
-                  src: img.src.replace(/^http:/, 'https:')
-                }))
-            : [{ src: '/placeholder.jpg' }];
-          
-          // Sort images to prioritize front/main images
-          processedImages.sort((a: any, b: any) => {
-            const aIsFront = a.src.includes('front') || a.src.includes('main');
-            const bIsFront = b.src.includes('front') || b.src.includes('main');
-            
-            if (aIsFront && !bIsFront) return -1;
-            if (!aIsFront && bIsFront) return 1;
-            return 0;
-          });
-          
-          return {
-            id: String(product.id),
-            title: product.title || 'Untitled Product',
-            description: product.description || '',
-            images: processedImages,
-            variants: Array.isArray(product.variants) ? product.variants.map((variant: any) => ({
-              id: String(variant.id || 'unknown'),
-              title: variant.title || '',
-              price: variant && variant.price ? variant.price / 100 : 19.99, // Convert cents to dollars
-              is_enabled: variant.is_enabled !== false, // Default to true if not specified
-              options: variant.options || {}
-            })) : [
-              {
-                id: 'default-variant',
-                title: 'Default',
-                price: 19.99,
-                is_enabled: true,
-                options: {}
-              }
-            ],
-            options: product.options || []
-          };
-        })
-      }
-
-      console.log('Transformed data count:', transformedData.data.length)
-      if (transformedData.data.length > 0) {
-        console.log('First transformed product:', {
-          id: transformedData.data[0].id,
-          title: transformedData.data[0].title,
-          hasImages: transformedData.data[0].images?.length > 0,
-          hasVariants: transformedData.data[0].variants?.length > 0
-        })
-      }
+      const data = await response.json()
+      console.log('Raw Printify API response structure:', Object.keys(data))
+      console.log('Raw Printify API response data count:', data.data?.length)
       
-      return transformedData
+      return data
     } catch (error) {
-      console.error('Error in PrintifyClient.getProducts:', error)
-      
-      // Return a dummy product in case of error
-      const dummyProduct = {
-        id: 'error-product',
-        title: 'Error Loading Products',
-        description: 'There was an error loading products. Please try again later.',
-        images: [{ src: '/placeholder.jpg' }],
-        variants: [
-          {
-            id: 'error-variant',
-            title: 'Default',
-            price: 19.99,
-            is_enabled: true,
-            options: {}
-          }
-        ],
-        options: []
-      }
-      
-      return { data: [dummyProduct] }
+      console.error('Error fetching products from Printify:', error)
+      throw error
     }
   }
 
@@ -205,15 +114,23 @@ export class PrintifyClient {
       const rawData = await response.json()
       console.log('Raw product data:', rawData)
 
-      // Process images to ensure we have valid URLs and prioritize front/main images
-      const processedImages = Array.isArray(rawData.images) 
-        ? rawData.images
-            .filter((img: any) => img && img.src)
-            .map((img: any) => ({
-              src: img.src.replace(/^http:/, 'https:')
-            }))
-        : [{ src: '/placeholder.jpg' }];
-      
+      // Process images to ensure they use HTTPS and the correct domain
+      const processedImages = rawData.images.map((image: any) => {
+        let src = image.src || image;
+        if (typeof src === 'string') {
+          // Ensure HTTPS
+          src = src.replace(/^http:/, 'https:');
+          // Update domain if needed
+          src = src.replace('cdn.printify.com', 'images-api.printify.com');
+          // Remove any preview parameters
+          src = src.replace(/[?&]preview=\d+/, '');
+          // Add timestamp to prevent caching issues
+          src = `${src}${src.includes('?') ? '&' : '?'}t=${Date.now()}`;
+          return { src };
+        }
+        return image;
+      });
+
       // Sort images to prioritize front/main images
       processedImages.sort((a: any, b: any) => {
         const aIsFront = a.src.includes('front') || a.src.includes('main');
@@ -230,21 +147,23 @@ export class PrintifyClient {
         title: rawData.title || 'Untitled Product',
         description: rawData.description || '',
         images: processedImages,
-        variants: Array.isArray(rawData.variants) ? rawData.variants.map((variant: any) => ({
-          id: String(variant.id || 'unknown'),
-          title: variant.title || '',
-          price: variant && variant.price ? variant.price / 100 : 19.99, // Convert cents to dollars
-          is_enabled: variant.is_enabled !== false, // Default to true if not specified
-          options: variant.options || {}
-        })) : [
-          {
-            id: 'default-variant',
-            title: 'Default',
-            price: 19.99,
-            is_enabled: true,
-            options: {}
-          }
-        ],
+        variants: Array.isArray(rawData.variants) ? rawData.variants
+          .filter((variant: any) => variant && variant.is_enabled) // Only include enabled variants
+          .map((variant: any) => ({
+            id: String(variant.id || 'unknown'),
+            title: variant.title || '',
+            price: variant && variant.price ? variant.price / 100 : 19.99, // Convert cents to dollars
+            is_enabled: true, // We've already filtered for enabled variants
+            options: variant.options || {}
+          })) : [
+            {
+              id: 'default-variant',
+              title: 'Default',
+              price: 19.99,
+              is_enabled: true,
+              options: {}
+            }
+          ],
         options: rawData.options || []
       }
 

@@ -4,30 +4,30 @@ const nextConfig = {
   images: {
     domains: [
       'images.printify.com',
-      'printify.com',
-      'cdn.printify.com',
-      'images-cdn.printify.com',
-      'images.unsplash.com',
-      'res.cloudinary.com'
+      'images-api.printify.com',
+      'cdn.printify.com'
     ],
-    unoptimized: process.env.NODE_ENV === 'development',
   },
   env: {
     PRINTIFY_API_TOKEN: process.env.PRINTIFY_API_TOKEN,
-    NEXT_PUBLIC_PRINTIFY_SHOP_ID: process.env.NEXT_PUBLIC_PRINTIFY_SHOP_ID,
-    NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
   },
-  webpack: (config, { isServer }) => {
-    if (!isServer) {
-      config.resolve.fallback = {
-        ...config.resolve.fallback,
-        fs: false,
-        net: false,
-        tls: false,
-      };
-    }
+  experimental: {
+    serverComponentsExternalPackages: ['sharp'],
+  },
+  webpack: (config) => {
+    config.resolve.fallback = { fs: false, path: false };
     return config;
   },
+  // Optimize for Vercel deployment
+  swcMinify: true,
+  poweredByHeader: false,
+  compress: true,
+  productionBrowserSourceMaps: false,
+  // Reduce memory usage during build
+  onDemandEntries: {
+    maxInactiveAge: 25 * 1000,
+    pagesBufferLength: 2,
+  }
 }
 
 module.exports = nextConfig 
