@@ -1,6 +1,7 @@
 import React from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { formatPrice, getBestPrice } from '../utils/formatters'
 
 interface Product {
   id: string
@@ -46,7 +47,7 @@ export default function RelatedProducts({ products }: RelatedProductsProps) {
                 {product.title}
               </h3>
               <p className="text-lg font-bold text-white">
-                ${product.variants[0]?.price.toFixed(2)} <span className="text-sm text-white/60">CAD</span>
+                {formatPrice(getBestPrice(product.variants))} <span className="text-sm text-white/60">CAD</span>
               </p>
             </div>
           </Link>

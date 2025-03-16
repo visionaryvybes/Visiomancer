@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { formatPrice, getBestPrice } from '../utils/formatters'
 
 interface Product {
   id: string
@@ -46,7 +47,7 @@ export default function RecentlyViewed() {
             </div>
             <h3 className="text-sm font-medium truncate">{product.title}</h3>
             <p className="text-sm text-foreground/60">
-              ${product.variants[0]?.price.toFixed(2)}
+              {formatPrice(getBestPrice(product.variants))}
             </p>
           </Link>
         ))}

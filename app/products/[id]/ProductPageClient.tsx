@@ -4,6 +4,7 @@ import React from 'react'
 import Image from 'next/image'
 import { Star, Truck, Shield, RotateCcw, ChevronLeft, ChevronRight, Share2, Heart, ChevronDown } from 'lucide-react'
 import { useCart } from '../../../context/CartContext'
+import { formatPrice, getBestPrice } from '../../../utils/formatters'
 
 interface ProductPageClientProps {
   initialProduct: Product
@@ -17,16 +18,20 @@ interface Variant {
   options: Record<string, string>
 }
 
+interface ProductOption {
+  name: string
+  type: string
+  values: string[]
+  display_in_preview: boolean
+}
+
 interface Product {
   id: string
   title: string
   description: string
   images: Array<{ src: string }>
   variants: Variant[]
-  options: Array<{
-    name: string
-    values: string[]
-  }>
+  options: ProductOption[]
 }
 
 // Helper function for safe logging (only in development)
@@ -60,55 +65,90 @@ export default function ProductPageClient({ initialProduct }: ProductPageClientP
 
   // Get available sizes and their variants
   const sizeVariants = React.useMemo(() => {
-    // Define the allowed sizes in the correct order
-    const allowedSizes = [
-      '12″ x 18″ / Matte',
-      '18″ x 24″ / Matte',
-      '24″ x 36″ / Matte',
-      '28″ x 40″ / Matte',
-      '36″ x 48″ / Matte',
-      '36″ x 54″ / Matte'
-    ]
+    if (!product?.variants) return [];
+    
+    // Get all unique sizes from variant titles
+    const sizes = new Set(product.variants.map(v => v.title.split(' / ')[1]).filter(Boolean));
+    
+    // Sort sizes in a logical order
+    const sizeOrder = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL'];
+    const sortedSizes = Array.from(sizes).sort((a, b) => {
+      const aIndex = sizeOrder.indexOf(a);
+      const bIndex = sizeOrder.indexOf(b);
+      return aIndex === -1 ? 1 : bIndex === -1 ? -1 : aIndex - bIndex;
+    });
 
-    // Filter variants to only include allowed sizes and maintain order
-    const variants = allowedSizes
-      .map(size => {
-        const variant = product.variants.find(v => 
-          v.title === size || 
-          v.title.replace(/&Prime;/g, '"') === size.replace(/&Prime;/g, '"')
-        )
-        return variant ? {
-          size: variant.title.replace(/&Prime;/g, '"').trim(),
-          variant: variant
-        } : null
-      })
-      .filter((v): v is { size: string; variant: Variant } => v !== null)
+    return sortedSizes.map(size => {
+      const variant = product.variants.find(v => v.title.includes(` / ${size}`));
+      return variant ? { size, variant } : null;
+    }).filter((v): v is { size: string; variant: Variant } => v !== null);
+  }, [product]);
 
-    safeLog('Filtered size variants:', variants)
-    return variants
-  }, [product.variants])
+  // Get available colors for the selected size
+  const colorVariants = React.useMemo(() => {
+    if (!product?.variants || !selectedSize) return [];
+    
+    // Get all variants for the selected size
+    const sizeVariants = product.variants.filter(v => v.title.includes(` / ${selectedSize}`));
+    
+    // Extract unique colors
+    const colors = new Set(sizeVariants.map(v => v.title.split(' / ')[0]));
+    
+    return Array.from(colors).map(color => {
+      const variant = sizeVariants.find(v => v.title.startsWith(color));
+      return variant ? { color, variant } : null;
+    }).filter((v): v is { color: string; variant: Variant } => v !== null);
+  }, [product, selectedSize]);
 
-  // Set initial selected size
+  const [selectedColor, setSelectedColor] = React.useState<string>('');
+
+  // Set initial selected size and color
   React.useEffect(() => {
-    if (!selectedSize && sizeVariants.length > 0) {
-      setSelectedSize(sizeVariants[0].size)
-      safeLog('Setting initial size:', sizeVariants[0].size)
+    if (sizeVariants.length > 0 && !selectedSize) {
+      setSelectedSize(sizeVariants[0].size);
     }
-  }, [sizeVariants, selectedSize])
+  }, [sizeVariants, selectedSize]);
 
-  // Get the selected variant based on size
+  React.useEffect(() => {
+    if (colorVariants.length > 0 && !selectedColor) {
+      setSelectedColor(colorVariants[0].color);
+    }
+  }, [colorVariants, selectedColor]);
+
+  // Get the selected variant based on size and color
   const selectedVariant = React.useMemo(() => {
-    const variant = sizeVariants.find(sv => sv.size === selectedSize)?.variant
-    safeLog('Selected variant:', variant)
-    return variant || null
-  }, [sizeVariants, selectedSize])
+    if (!product?.variants || !selectedSize) return null;
+    
+    return product.variants.find(v => {
+      const [color, size] = v.title.split(' / ');
+      return size === selectedSize && (!selectedColor || color === selectedColor);
+    }) || null;
+  }, [product, selectedSize, selectedColor]);
+
+  // Get option labels
+  const optionLabels = React.useMemo(() => {
+    if (!product?.options) return { size: 'Size', color: 'Color' };
+    
+    const sizeOption = product.options.find(opt => 
+      opt.name.toLowerCase().includes('size') || 
+      opt.type === 'size'
+    );
+    const colorOption = product.options.find(opt => 
+      opt.name.toLowerCase().includes('color') || 
+      opt.type === 'color'
+    );
+    
+    return {
+      size: sizeOption?.name || 'Size',
+      color: colorOption?.name || 'Color'
+    };
+  }, [product]);
 
   // Price display section update
   const priceDisplay = React.useMemo(() => {
-    const price = selectedVariant?.price.toFixed(2) || '0.00'
-    safeLog('Price display:', price)
-    return price
-  }, [selectedVariant])
+    const price = selectedVariant?.price || getBestPrice(product?.variants || []) || 0;
+    return formatPrice(price);
+  }, [selectedVariant, product]);
 
   const handleQuantityChange = (delta: number) => {
     const newQuantity = quantity + delta
@@ -145,19 +185,19 @@ export default function ProductPageClient({ initialProduct }: ProductPageClientP
     )
 
   return (
-    <div className="min-h-screen bg-[#1a1a3a]">
-      <div className="container mx-auto px-4 py-4 sm:py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-8">
+    <div className="min-h-screen bg-[#1a1a3a] w-full overflow-x-hidden pb-20 md:pb-0">
+      <div className="container mx-auto px-4 py-4 sm:py-8 max-w-7xl">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-8 w-full">
           {/* Left Column - Image Gallery */}
-          <div className="relative bg-white rounded-lg p-2 sm:p-4">
-            <div className="relative aspect-square">
+          <div className="relative bg-white rounded-lg p-2 sm:p-4 w-full">
+            <div className="relative aspect-square w-full">
               <Image
                 src={uniqueImages[currentImageIndex]?.src || '/placeholder.jpg'}
                 alt={product.title}
                 fill
+                priority={true}
                 className="object-contain"
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                priority
               />
             </div>
             {/* Navigation Arrows */}
@@ -180,7 +220,7 @@ export default function ProductPageClient({ initialProduct }: ProductPageClientP
               </>
             )}
             {/* Thumbnail Grid */}
-            <div className="grid grid-cols-4 gap-2 sm:gap-4 mt-2 sm:mt-4">
+            <div className="grid grid-cols-4 gap-2 sm:gap-4 mt-2 sm:mt-4 w-full">
               {uniqueImages.map((image: any, index: number) => (
                 <button
                   key={image.src}
@@ -194,6 +234,7 @@ export default function ProductPageClient({ initialProduct }: ProductPageClientP
                     alt={`${product.title} - View ${index + 1}`}
                     fill
                     className="object-contain p-1 sm:p-2"
+                    sizes="(max-width: 640px) 25vw, (max-width: 1024px) 15vw, 10vw"
                   />
                 </button>
               ))}
@@ -201,47 +242,79 @@ export default function ProductPageClient({ initialProduct }: ProductPageClientP
           </div>
 
           {/* Right Column - Product Info */}
-          <div className="space-y-4 sm:space-y-6">
+          <div className="space-y-4 sm:space-y-6 w-full">
             {/* Title */}
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white">{product.title}</h1>
+            <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-white break-words">{product.title}</h1>
 
             {/* Price */}
-            <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-white">
-              ${priceDisplay} <span className="text-sm sm:text-lg font-normal text-white/60">Excl. Tax</span>
+            <div className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-white">
+              {priceDisplay} <span className="text-sm sm:text-base lg:text-lg font-normal text-white/60">Excl. Tax</span>
             </div>
 
             {/* Size Selection */}
-            <div className="space-y-2 sm:space-y-4">
-              <div className="flex justify-between items-center">
-                <h3 className="text-lg sm:text-xl font-medium text-white">Size: {selectedSize}</h3>
+            <div className="space-y-2 sm:space-y-4 w-full">
+              <div className="flex justify-between items-center flex-wrap gap-2">
+                <h3 className="text-base sm:text-lg lg:text-xl font-medium text-white">{optionLabels.size}: {selectedSize}</h3>
                 <button onClick={() => setShowSizeGuide(true)} className="text-sm sm:text-base text-blue-400 hover:text-blue-300">
                   Size guide
                 </button>
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3 w-full">
                 {sizeVariants.map(({ size, variant }) => (
                   <button
                     key={size}
                     onClick={() => setSelectedSize(size)}
-                    className={`py-2 sm:py-4 px-2 sm:px-4 rounded-lg transition-colors ${
+                    className={`py-2 px-2 rounded-lg transition-colors ${
                       selectedSize === size
                         ? 'bg-white text-[#1a1a3a] font-medium'
                         : 'border border-white/20 text-white hover:border-white/40'
                     }`}
                   >
                     <div className="flex flex-col items-center">
-                      <span className="text-xs sm:text-sm md:text-base">{size.replace(' / Matte', '')}</span>
-                      <span className="text-xs sm:text-sm mt-1">${variant.price.toFixed(2)}</span>
+                      <span className="text-xs sm:text-sm">
+                        {product.title.toLowerCase().includes('poster') 
+                          ? size.replace(' / Matte', '')
+                          : size
+                        }
+                      </span>
+                      <span className="text-xs sm:text-sm mt-1">{formatPrice(variant.price)}</span>
                     </div>
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Paper Type */}
+            {/* Color Selection - Only show if color options exist */}
+            {colorVariants.length > 0 && (
+              <div className="space-y-2 sm:space-y-4 w-full">
+                <h3 className="text-base sm:text-lg lg:text-xl font-medium text-white">{optionLabels.color}: {selectedColor}</h3>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3 w-full">
+                  {colorVariants.map(({ color, variant }) => (
+                    <button
+                      key={color}
+                      onClick={() => setSelectedColor(color)}
+                      className={`py-2 px-2 rounded-lg transition-colors ${
+                        selectedColor === color
+                          ? 'bg-white text-[#1a1a3a] font-medium'
+                          : 'border border-white/20 text-white hover:border-white/40'
+                      }`}
+                    >
+                      <div className="flex flex-col items-center">
+                        <span className="text-xs sm:text-sm">{color}</span>
+                        <span className="text-xs sm:text-sm mt-1">{formatPrice(variant.price)}</span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Paper Type - Only show for poster products */}
+            {product.title.toLowerCase().includes('poster') && (
             <div className="space-y-2 sm:space-y-4">
               <h3 className="text-lg sm:text-xl font-medium text-white">Paper: Matte</h3>
             </div>
+            )}
 
             {/* Quantity */}
             <div className="space-y-2 sm:space-y-4">

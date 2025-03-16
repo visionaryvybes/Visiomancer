@@ -57,7 +57,9 @@ export async function GET(
       ...data,
       variants: data.variants.map((variant: any) => ({
         ...variant,
-        price: variant.price / 100 // Convert cents to dollars
+        price: variant.price,
+        is_enabled: variant.is_enabled || true,
+        options: variant.options || {}
       }))
     }
 

@@ -49,14 +49,18 @@ export async function GET(
           ...product,
           variants: product.variants.map((variant: any) => ({
             ...variant,
-            price: variant.price / 100
+            price: variant.price,
+            is_enabled: variant.is_enabled || true,
+            options: variant.options || {}
           }))
         }))
       } else if (data.variants) {
         // Single product
         data.variants = data.variants.map((variant: any) => ({
           ...variant,
-          price: variant.price / 100
+          price: variant.price,
+          is_enabled: variant.is_enabled || true,
+          options: variant.options || {}
         }))
       }
     }

@@ -29,22 +29,22 @@ const badges = [
 
 export function TrustBadges() {
   return (
-    <div className="bg-background/50 backdrop-blur-sm border-t border-white/10">
+    <div className="bg-background/50 backdrop-blur-sm border-t border-white/10 relative z-10 mt-auto">
       <div className="container mx-auto">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 py-6 px-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 py-4 px-2 md:gap-4 md:py-6 md:px-4 mb-16 md:mb-0">
           {badges.map((badge, index) => (
             <motion.div
               key={badge.title}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
-              className="group flex flex-col items-center text-center p-4 rounded-lg transition-colors hover:bg-white/5"
+              className="group flex flex-col items-center text-center p-2 md:p-4 rounded-lg transition-colors hover:bg-white/5"
             >
-              <badge.icon className="w-8 h-8 mb-2 text-primary transition-transform group-hover:scale-110" />
-              <h3 className="font-medium mb-1 text-white/90 group-hover:text-white">
+              <badge.icon className="w-6 h-6 md:w-8 md:h-8 mb-1 md:mb-2 text-primary transition-transform group-hover:scale-110" />
+              <h3 className="font-medium mb-0.5 md:mb-1 text-sm md:text-base text-white/90 group-hover:text-white">
                 {badge.title}
               </h3>
-              <p className="text-sm text-white/60 group-hover:text-white/90">
+              <p className="text-xs md:text-sm text-white/60 group-hover:text-white/90">
                 {badge.description}
               </p>
             </motion.div>

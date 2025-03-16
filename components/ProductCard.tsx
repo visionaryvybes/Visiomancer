@@ -10,31 +10,13 @@ import { Eye, ShoppingCart, Heart } from 'lucide-react'
 import { Product } from '@/types'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
+import { formatPrice, getBestPrice, hasValidPrice } from '../utils/formatters'
+import { PrintifyProduct } from "../app/api/printify/client"
 
 interface ProductCardProps {
-  product: {
-    id: string
-    title: string
-    description: string
-    images: { src: string }[]
-    variants: Array<{
-      id: string
-      title: string
-      price: number
-      is_enabled: boolean
-      options: Record<string, string>
-    }>
-  }
+  product: PrintifyProduct
   priority?: boolean
 }
-
-// Helper function to format price
-const formatPrice = (price: number): string => {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-  }).format(price);
-};
 
 // Helper function for safe logging (only in development)
 const safeLog = (message: string, data: any) => {
@@ -199,8 +181,8 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
           })
           return false
         }
-        return true
-      })
+      return true
+    })
       .map(v => v.title.replace(/&Prime;/g, '"'))
       .filter(Boolean)
       .filter((value, index, self) => self.indexOf(value) === index)
@@ -223,7 +205,7 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
 
   // If we don't have any valid images, use a placeholder
   const hasValidImages = uniqueImages.length > 0
-  
+
   // Get the selected variant based on size
   const selectedVariant = React.useMemo(() => {
     if (!selectedSize) return safeProduct.variants.find(v => v.is_enabled)
@@ -235,8 +217,8 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
   const handleQuickAdd = (e: React.MouseEvent) => {
     e.preventDefault()
     if (selectedVariant) {
-      addToCart({
-        id: safeProduct.id,
+    addToCart({
+      id: safeProduct.id,
         title: sanitizedTitle,
         price: selectedVariant.price,
         image: hasValidImages ? uniqueImages[0]?.src : '/placeholder.jpg',
@@ -270,71 +252,43 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
   }
 
   return (
-    <Link href={`/products/${safeProduct.id}`} className="block h-full">
-      <Card className="group relative h-full overflow-hidden rounded-lg bg-white/5 hover:bg-white/10 transition-all duration-300">
-        {/* Stock Badge */}
-        {safeProduct.variants.some(v => v.is_enabled) && (
-          <div className="absolute left-4 top-4 z-10">
-            <span className="rounded-full bg-emerald-500/90 backdrop-blur-sm px-3 py-1 text-xs font-medium text-white shadow-lg">
-              In Stock
-            </span>
-          </div>
-        )}
-
-        {/* Quick Actions - Visible on mobile without hover */}
-        <div className="absolute right-2 sm:right-4 top-2 sm:top-4 z-10 flex flex-col gap-2 sm:opacity-0 sm:transform sm:translate-x-4 transition-all duration-300 sm:group-hover:opacity-100 sm:group-hover:translate-x-0">
-          <button 
-            onClick={handleQuickAdd}
-            className="rounded-full bg-blue-500 p-1.5 sm:p-2 hover:bg-blue-600 transition-colors duration-200 text-white shadow-lg"
-            title="Add to Cart"
-          >
-            <ShoppingCart className="h-3 w-3 sm:h-4 sm:w-4" />
-          </button>
-          <button 
-            onClick={handleToggleWishlist}
-            className={`rounded-full p-1.5 sm:p-2 transition-colors duration-200 text-white shadow-lg ${
-              isWishlisted ? 'bg-pink-600 hover:bg-pink-700' : 'bg-pink-500 hover:bg-pink-600'
-            }`}
-            title={isWishlisted ? "Remove from Wishlist" : "Add to Wishlist"}
-          >
-            <Heart className={`h-3 w-3 sm:h-4 sm:w-4 ${isWishlisted ? 'fill-white' : ''}`} />
-          </button>
-          <button 
-            onClick={handleQuickView}
-            className="rounded-full bg-purple-500 p-1.5 sm:p-2 hover:bg-purple-600 transition-colors duration-200 text-white shadow-lg"
-            title="Quick View"
-          >
-            <Eye className="h-3 w-3 sm:h-4 sm:w-4" />
-          </button>
-        </div>
-
+    <Link href={`/product/${product.id}`} className="group block h-full w-full">
+      <div className="relative h-full w-full overflow-hidden rounded-lg bg-white/5 transition-all duration-300 hover:bg-white/10">
         {/* Product Image */}
-        <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-white/5 to-transparent">
-          <Image
-            src={hasValidImages ? uniqueImages[0]?.src : '/placeholder.jpg'}
-            alt={sanitizedTitle}
-            fill
-            priority={priority}
-            className="object-contain p-4 transition-transform duration-500 group-hover:scale-110"
-            sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-          />
+        <div className="relative aspect-square w-full overflow-hidden">
+          {safeProduct.images.length > 0 ? (
+            <Image
+              src={safeProduct.images[0].src}
+              alt={sanitizedTitle}
+              fill
+              className="object-cover transition-transform duration-300 group-hover:scale-105"
+              sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw"
+              priority={priority}
+            />
+          ) : (
+            <div className="flex h-full items-center justify-center bg-black/10">
+              <span className="text-sm text-white/60">No image available</span>
+            </div>
+          )}
         </div>
 
-        {/* Product Info - Dark overlay at bottom */}
-        <div className="absolute bottom-0 left-0 right-0 bg-[#1a1a3a]/95 backdrop-blur-sm p-3 sm:p-4">
-          <h3 className="text-sm sm:text-base font-medium text-white mb-1 sm:mb-2 line-clamp-1 group-hover:text-blue-400 transition-colors duration-300">
-            {sanitizedTitle}
-          </h3>
-          
-          {/* Price */}
-          <div className="text-base sm:text-lg font-semibold text-white">
-            ${selectedVariant?.price.toFixed(2)} <span className="text-xs sm:text-sm font-normal text-white/60">Excl. Tax</span>
+        {/* Product Info */}
+        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-3">
+          <div className="space-y-1">
+            <h3 className="line-clamp-2 text-sm font-medium text-white">
+              {sanitizedTitle}
+            </h3>
+            {selectedVariant && (
+              <p className="text-sm font-medium text-white/90">
+                ${selectedVariant.price.toFixed(2)}
+              </p>
+            )}
           </div>
         </div>
 
-        {/* Hover Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#1a1a3a]/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-      </Card>
+        {/* Hover Effect */}
+        <div className="absolute inset-0 bg-black/0 transition-colors duration-300 group-hover:bg-black/10" />
+      </div>
     </Link>
   )
-} 
+}

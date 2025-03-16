@@ -77,6 +77,45 @@ export class PrintifyClient {
       console.log('Raw Printify API response structure:', Object.keys(data))
       console.log('Raw Printify API response data count:', data.data?.length)
       
+      // Transform the data to convert prices from cents to dollars and add category tags
+      if (data.data) {
+        data.data = data.data.map((product: PrintifyProduct) => {
+          // Extract category from title or description
+          const title = product.title.toLowerCase()
+          const description = product.description.toLowerCase()
+          const tags = []
+
+          // Add category tags based on product title and description
+          if (title.includes('poster') || title.includes('print') || description.includes('poster') || description.includes('print')) {
+            tags.push('posters')
+          }
+          if (title.includes('shirt') || title.includes('hoodie') || title.includes('apparel') || description.includes('shirt') || description.includes('hoodie')) {
+            tags.push('apparel')
+          }
+          if (title.includes('hat') || title.includes('cap') || title.includes('bag') || description.includes('accessory')) {
+            tags.push('accessories')
+          }
+          if (title.includes('decor') || title.includes('home') || description.includes('decor') || description.includes('home')) {
+            tags.push('home-decor')
+          }
+          if (title.includes('car') || title.includes('auto') || description.includes('car') || description.includes('automotive')) {
+            tags.push('automotive')
+          }
+          if (title.includes('minimalist') || description.includes('minimalist') || description.includes('simple')) {
+            tags.push('minimalist')
+          }
+
+          return {
+            ...product,
+            tags: Array.from(new Set([...(product.tags || []), ...tags])), // Remove duplicates using Array.from
+            variants: product.variants.map(variant => ({
+              ...variant,
+              price: variant.price // Remove the /100 conversion since prices are already in dollars
+            }))
+          }
+        })
+      }
+      
       return data
     } catch (error) {
       console.error('Error fetching products from Printify:', error)
@@ -152,19 +191,20 @@ export class PrintifyClient {
           .map((variant: any) => ({
             id: String(variant.id || 'unknown'),
             title: variant.title || '',
-            price: variant && variant.price ? variant.price / 100 : 19.99, // Convert cents to dollars
+            price: variant && variant.price ? variant.price : 0, // Remove the /100 conversion
             is_enabled: true, // We've already filtered for enabled variants
             options: variant.options || {}
           })) : [
             {
               id: 'default-variant',
               title: 'Default',
-              price: 19.99,
+              price: 0,
               is_enabled: true,
               options: {}
             }
           ],
-        options: rawData.options || []
+        options: rawData.options || [],
+        tags: rawData.tags || []
       }
 
       console.log('Transformed product:', transformedProduct)

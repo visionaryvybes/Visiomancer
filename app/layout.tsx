@@ -1,7 +1,12 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
-import RootLayoutClient from '@/components/RootLayoutClient'
+import MobileNavigation from '../components/MobileNavigation'
+import BackToTop from '../components/BackToTop'
+import Header from '../components/Header'
+import { cn } from '@/lib/utils'
+import { Toaster } from 'sonner'
+import { CartProvider } from '@/context/CartContext'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -62,11 +67,17 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className="dark" suppressHydrationWarning>
-      <body className={inter.className}>
-        <RootLayoutClient>
-          {children}
-        </RootLayoutClient>
+    <html lang="en" className="dark">
+      <body className={cn("min-h-screen bg-background font-sans antialiased", inter.className)}>
+        <CartProvider>
+          <Header />
+          <main className="pt-16">
+            {children}
+          </main>
+          <MobileNavigation />
+          <BackToTop />
+          <Toaster />
+        </CartProvider>
       </body>
     </html>
   )

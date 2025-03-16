@@ -5,6 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { X, Plus, Minus, ShoppingCart } from 'lucide-react'
 import { useCart } from '../context/CartContext'
+import { formatPrice } from '../utils/formatters'
 
 export default function Cart() {
   const {
@@ -132,7 +133,7 @@ export default function Cart() {
                             </button>
                           </div>
                           <p className="text-sm sm:text-base font-medium">
-                            ${((item.price || 0) * (item.quantity || 1)).toFixed(2)}
+                            {formatPrice((item.price || 0) * (item.quantity || 1))}
                           </p>
                         </div>
                       </div>
@@ -146,7 +147,7 @@ export default function Cart() {
               <div className="border-t border-white/10 px-3 sm:px-4 py-4 sm:py-6">
                 <div className="mb-3 sm:mb-4 flex justify-between text-base sm:text-lg font-medium">
                   <span>Total</span>
-                  <span>${total.toFixed(2)}</span>
+                  <span>{formatPrice(total)}</span>
                 </div>
                 <Link
                   href="/checkout"

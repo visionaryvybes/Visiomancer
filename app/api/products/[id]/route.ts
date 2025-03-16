@@ -53,7 +53,7 @@ export async function GET(
       })),
       variants: product.variants.map((variant: Variant) => ({
         ...variant,
-        price: parseFloat((variant.price / 100).toFixed(2)),
+        price: variant.price,
         is_enabled: variant.is_enabled || true,
         options: variant.options || {}
       })),

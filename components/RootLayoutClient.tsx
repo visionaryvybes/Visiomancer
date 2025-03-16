@@ -16,6 +16,7 @@ import { NewsletterPopup } from './ui/newsletter-popup'
 import { WarpBackground } from './ui/warp-background'
 import { Button } from './ui/button'
 import { X } from 'lucide-react'
+import MobileNavigation from './MobileNavigation'
 
 export default function RootLayoutClient({
   children,
@@ -31,63 +32,71 @@ export default function RootLayoutClient({
       enableSystem={false}
     >
       <CartProvider>
-        {/* Announcement Bar */}
-        {showAnnouncement && (
-          <div className="sticky top-0 z-50 bg-gradient-to-r from-blue-600 to-purple-600 px-4 py-2 text-white">
-            <div className="container mx-auto flex items-center justify-between">
-              <p className="text-sm font-medium">
-                🎉 Welcome to VISIOMANCER! Free shipping on orders over $50
-              </p>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-white hover:bg-white/20"
-                onClick={() => setShowAnnouncement(false)}
-              >
-                <X className="h-4 w-4" />
-              </Button>
+        <div className="flex flex-col min-h-screen w-full overflow-x-hidden overflow-y-auto">
+          {/* Announcement Bar */}
+          {showAnnouncement && (
+            <div className="sticky top-0 z-50 bg-gradient-to-r from-blue-600 to-purple-600 px-4 py-2 text-white">
+              <div className="container mx-auto flex items-center justify-between">
+                <p className="text-sm font-medium">
+                  🎉 Welcome to VISIOMANCER! Free shipping on orders over $50
+                </p>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-white hover:bg-white/20"
+                  onClick={() => setShowAnnouncement(false)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
+          )}
+
+          {/* Header */}
+          <Header />
+
+          {/* Main Content */}
+          <main className="flex-grow w-full">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={Math.random()}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className="w-full"
+              >
+                {children}
+              </motion.div>
+            </AnimatePresence>
+          </main>
+
+          {/* Trust Badges and Footer */}
+          <div className="relative z-10">
+            <TrustBadges />
+            <Footer />
           </div>
-        )}
 
-        {/* Header */}
-        <Header />
+          {/* Mobile Navigation */}
+          <MobileNavigation />
 
-        {/* Main Content */}
-        <main>
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={Math.random()}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-            >
-              {children}
-            </motion.div>
-          </AnimatePresence>
-        </main>
-
-        {/* Trust Badges and Footer */}
-        <TrustBadges />
-        <Footer />
-
-        {/* Floating Elements */}
-        <Cart />
-        <ScrollToTop />
-        <NewsletterPopup />
-        <Toaster 
-          position="bottom-right" 
-          toastOptions={{
-            style: {
-              background: 'rgba(0, 0, 0, 0.8)',
-              color: '#fff',
-              backdropFilter: 'blur(8px)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-            },
-          }}
-        />
-        <Analytics />
-        <SpeedInsights />
+          {/* Floating Elements */}
+          <Cart />
+          <ScrollToTop />
+          <NewsletterPopup />
+          <Toaster 
+            position="bottom-right" 
+            toastOptions={{
+              style: {
+                background: 'rgba(0, 0, 0, 0.8)',
+                color: '#fff',
+                backdropFilter: 'blur(8px)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+              },
+            }}
+          />
+          <Analytics />
+          <SpeedInsights />
+        </div>
       </CartProvider>
     </ThemeProvider>
   )
