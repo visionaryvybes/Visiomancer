@@ -1,36 +1,198 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Product Components for E-commerce
 
-## Getting Started
+A collection of reusable React components designed for e-commerce product pages, built with TypeScript, React, and TailwindCSS.
 
-First, run the development server:
+## Features
 
+- **ProductColorSelector**: Select product colors with visual swatches
+- **ProductSizeSelector**: Choose product sizes with availability indicators
+- **ProductQuantitySelector**: Increment/decrement quantity with validation
+- **ProductPricingDisplay**: Show product pricing with support for sales/discounts
+- **ProductAddToCartButton**: Add to cart button with loading and success states
+- **ProductReviewStars**: Display product ratings with partial star support
+
+## Installation
+
+1. Clone the repository:
+```bash
+git clone https://github.com/yourusername/store-app.git
+cd store-app
+```
+
+2. Install dependencies:
+```bash
+npm install
+# or
+yarn
+```
+
+3. Start the development server:
 ```bash
 npm run dev
 # or
 yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+4. Visit http://localhost:3000/example to see the components in action
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Usage
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Import the components from the components directory:
 
-## Learn More
+```tsx
+import {
+  ProductColorSelector,
+  ProductSizeSelector,
+  ProductQuantitySelector,
+  ProductPricingDisplay,
+  ProductAddToCartButton,
+  ProductReviewStars
+} from '../components/products';
+```
 
-To learn more about Next.js, take a look at the following resources:
+### ProductColorSelector
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```tsx
+import { ProductColorSelector, ColorOption } from '../components/products';
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+const colors: ColorOption[] = [
+  { id: 'black', name: 'Black', hexColor: '#000000', inStock: true },
+  { id: 'white', name: 'White', hexColor: '#FFFFFF', inStock: true },
+  { id: 'red', name: 'Red', hexColor: '#FF0000', inStock: false },
+];
 
-## Deploy on Vercel
+function MyComponent() {
+  const [selectedColor, setSelectedColor] = useState('black');
+  
+  return (
+    <ProductColorSelector
+      colors={colors}
+      selectedColor={selectedColor}
+      onSelectColor={setSelectedColor}
+    />
+  );
+}
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### ProductSizeSelector
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```tsx
+import { ProductSizeSelector, SizeOption } from '../components/products';
+
+const sizes: SizeOption[] = [
+  { id: 's', name: 'S', inStock: true },
+  { id: 'm', name: 'M', inStock: true, isLowStock: true },
+  { id: 'l', name: 'L', inStock: false },
+];
+
+function MyComponent() {
+  const [selectedSize, setSelectedSize] = useState<string | null>(null);
+  
+  return (
+    <ProductSizeSelector
+      sizes={sizes}
+      selectedSize={selectedSize}
+      onSelectSize={setSelectedSize}
+      layout="grid" // or "inline"
+    />
+  );
+}
+```
+
+### ProductQuantitySelector
+
+```tsx
+import { ProductQuantitySelector } from '../components/products';
+
+function MyComponent() {
+  const [quantity, setQuantity] = useState(1);
+  
+  return (
+    <ProductQuantitySelector
+      quantity={quantity}
+      onChange={setQuantity}
+      minQuantity={1}
+      maxQuantity={10}
+    />
+  );
+}
+```
+
+### ProductPricingDisplay
+
+```tsx
+import { ProductPricingDisplay } from '../components/products';
+
+function MyComponent() {
+  return (
+    <ProductPricingDisplay
+      price={29.99}
+      compareAtPrice={39.99} // optional, for sale items
+      size="large" // "small", "medium", or "large"
+      currency="USD" // optional, defaults to USD
+      showPercentOff={true} // optional
+    />
+  );
+}
+```
+
+### ProductAddToCartButton
+
+```tsx
+import { ProductAddToCartButton } from '../components/products';
+
+function MyComponent() {
+  const [isLoading, setIsLoading] = useState(false);
+  const [isAdded, setIsAdded] = useState(false);
+  
+  const handleAddToCart = () => {
+    setIsLoading(true);
+    // Add to cart logic
+    setTimeout(() => {
+      setIsLoading(false);
+      setIsAdded(true);
+      setTimeout(() => setIsAdded(false), 2000);
+    }, 1000);
+  };
+  
+  return (
+    <ProductAddToCartButton
+      onClick={handleAddToCart}
+      isLoading={isLoading}
+      isAdded={isAdded}
+      variant="primary" // "primary", "secondary", or "outline"
+      size="medium" // "small", "medium", or "large"
+      fullWidth={false} // optional
+    />
+  );
+}
+```
+
+### ProductReviewStars
+
+```tsx
+import { ProductReviewStars } from '../components/products';
+
+function MyComponent() {
+  return (
+    <ProductReviewStars
+      rating={4.5}
+      reviewCount={127} // optional
+      showCount={true} // optional
+      size="medium" // "small", "medium", or "large"
+    />
+  );
+}
+```
+
+## Dependencies
+
+- React
+- TypeScript
+- TailwindCSS
+- Framer Motion
+- Heroicons
+
+## License
+
+MIT
