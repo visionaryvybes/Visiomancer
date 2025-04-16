@@ -5,14 +5,17 @@ import { cn } from '@/lib/utils';
 // Define MotionButton type for clarity
 type MotionButtonProps = HTMLMotionProps<'button'>;
 
+// IconButtonProps now correctly only includes its specific props + standard button attributes
 interface IconButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   icon: React.ReactNode;
   variant?: 'default' | 'outline' | 'ghost' | 'glow' | 'primary' | 'secondary' | 'danger';
   size?: 'sm' | 'md' | 'lg';
-  animate?: 'none' | 'pulse' | 'spin' | 'bounce' | 'wiggle';
+  // Keep the 'animate' prop to control which animation to use
+  animate?: 'none' | 'pulse' | 'spin' | 'bounce' | 'wiggle'; 
   badge?: number | string;
   isActive?: boolean;
   tooltip?: string;
+  // We remove explicit motion props like whileHover, whileTap from here
 }
 
 const MotionButton = motion.button;
@@ -20,34 +23,27 @@ const MotionButton = motion.button;
 const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
   (
     {
+      // Destructure only IconButton specific props + className
       icon,
       className,
       variant = 'default',
       size = 'md',
-      animate = 'none',
+      animate = 'none', // Keep this to determine motion behavior
       badge,
       isActive = false,
       tooltip,
-      // Extract motion-related props to avoid passing them down with standard HTML attributes
-      // These props are specific to framer-motion and might conflict
-      whileHover: _whileHover,
-      whileTap: _whileTap,
-      // We handle animate and transition explicitly below
-      animate: _buttonAnimate, 
-      transition: _buttonTransition,
-      // Gather remaining standard HTML button props
-      ...props 
+      // Gather the rest of the props (standard button attributes)
+      ...buttonProps 
     },
     ref
   ) => {
-    // Size variants
+    // --- (Existing sizeClasses, variantClasses, animationVariants logic remains the same) ---
     const sizeClasses = {
       sm: 'w-8 h-8 text-sm p-1',
       md: 'w-10 h-10 text-base p-2',
       lg: 'w-12 h-12 text-lg p-3',
     };
 
-    // Style variants
     const variantClasses = {
       default:
         'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600',
@@ -62,48 +58,38 @@ const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
       danger: 'bg-red-600 text-white hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600',
     };
 
-    // Base animation variants
     const animationVariants = {
-      pulse: {
+      pulse: { /* ... */ },
+      spin: { /* ... */ },
+      bounce: { /* ... */ },
+      wiggle: { /* ... */ },
+    };
+    // Ensure full definitions are kept from original file if they existed
+    animationVariants.pulse = {
         scale: [1, 1.1, 1],
-        transition: {
-          duration: 1,
-          repeat: Infinity,
-          repeatType: 'loop' as const,
-        },
-      },
-      spin: {
+        transition: { duration: 1, repeat: Infinity, repeatType: 'loop' as const },
+    };
+    animationVariants.spin = {
         rotate: 360,
-        transition: {
-          duration: 1,
-          repeat: Infinity,
-          ease: 'linear' as const,
-        },
-      },
-      bounce: {
+        transition: { duration: 1, repeat: Infinity, ease: 'linear' as const },
+    };
+     animationVariants.bounce = {
         y: [0, -5, 0],
-        transition: {
-          duration: 0.5,
-          repeat: Infinity,
-          repeatType: 'loop' as const,
-        },
-      },
-      wiggle: {
+        transition: { duration: 0.5, repeat: Infinity, repeatType: 'loop' as const },
+    };
+    animationVariants.wiggle = {
         rotate: [-3, 3, -3],
-        transition: {
-          duration: 0.5,
-          repeat: Infinity,
-          repeatType: 'loop' as const,
-        },
-      },
+        transition: { duration: 0.5, repeat: Infinity, repeatType: 'loop' as const },
     };
 
-    // Interactive motion props - explicitly define them
+
+    // Construct the motion props based on the 'animate' prop
     const motionProps: MotionButtonProps = {
       whileHover: { 
         scale: animate === 'none' ? 1.1 : 1,
       },
       whileTap: { scale: 0.95 },
+      // Use the 'animate' prop passed to IconButton to select the correct variant
       animate: animate !== 'none' ? animationVariants[animate] : undefined,
       transition: { type: 'spring', stiffness: 400, damping: 17 },
     };
@@ -121,9 +107,9 @@ const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
             isActive && 'ring-2 ring-blue-500',
             className
           )}
-          // Pass only standard HTML button props here
-          {...props} 
-          // Pass explicitly defined motion props separately
+          // Pass standard HTML button attributes collected in buttonProps
+          {...buttonProps} 
+          // Pass the explicitly constructed motion props
           {...motionProps}
         >
           {icon}
@@ -160,4 +146,4 @@ const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
 
 IconButton.displayName = 'IconButton';
 
-export default IconButton; 
+export default IconButton;
