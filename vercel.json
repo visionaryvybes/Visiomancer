@@ -5,8 +5,5 @@
   "installCommand": "yarn",
   "framework": "nextjs",
   "outputDirectory": ".next",
-  "cleanUrls": true,
-  "typescript": {
-    "ignoreBuildErrors": true
-  }
+  "cleanUrls": true
 } 
