@@ -1,6 +1,9 @@
-import React from 'react';
-import { motion } from 'framer-motion';
+import React, { forwardRef } from 'react';
+import { motion, HTMLMotionProps } from 'framer-motion';
 import { cn } from '@/lib/utils';
+
+// Define MotionButton type for clarity
+type MotionButtonProps = HTMLMotionProps<'button'>;
 
 interface IconButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   icon: React.ReactNode;
@@ -14,34 +17,49 @@ interface IconButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> 
 
 const MotionButton = motion.button;
 
-const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>(
-  ({
-    className,
-    icon,
-    variant = 'default',
-    size = 'md',
-    animate = 'none',
-    badge,
-    isActive = false,
-    tooltip,
-    ...props
-  }, ref) => {
+const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
+  (
+    {
+      icon,
+      className,
+      variant = 'default',
+      size = 'md',
+      animate = 'none',
+      badge,
+      isActive = false,
+      tooltip,
+      // Extract motion-related props to avoid passing them down with standard HTML attributes
+      // These props are specific to framer-motion and might conflict
+      whileHover: _whileHover,
+      whileTap: _whileTap,
+      // We handle animate and transition explicitly below
+      animate: _buttonAnimate, 
+      transition: _buttonTransition,
+      // Gather remaining standard HTML button props
+      ...props 
+    },
+    ref
+  ) => {
     // Size variants
     const sizeClasses = {
-      sm: 'h-8 w-8 p-1 text-sm',
-      md: 'h-10 w-10 p-1.5',
-      lg: 'h-12 w-12 p-2 text-lg',
+      sm: 'w-8 h-8 text-sm p-1',
+      md: 'w-10 h-10 text-base p-2',
+      lg: 'w-12 h-12 text-lg p-3',
     };
 
     // Style variants
     const variantClasses = {
-      default: 'bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-200',
-      outline: 'border border-gray-300 hover:border-gray-400 text-gray-700 dark:border-gray-600 dark:hover:border-gray-500 dark:text-gray-200',
-      ghost: 'text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800',
-      glow: 'bg-primary text-white shadow-[0_0_10px_rgba(59,130,246,0.5)] hover:shadow-[0_0_20px_rgba(59,130,246,0.7)]',
-      primary: 'bg-blue-600 hover:bg-blue-700 text-white',
-      secondary: 'bg-purple-600 hover:bg-purple-700 text-white',
-      danger: 'bg-red-600 hover:bg-red-700 text-white',
+      default:
+        'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600',
+      outline:
+        'border border-gray-300 text-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700',
+      ghost: 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300',
+      glow: 'bg-blue-500 text-white hover:bg-blue-600 shadow-lg shadow-blue-500/50',
+      primary:
+        'bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600',
+      secondary:
+        'bg-gray-600 text-white hover:bg-gray-700 dark:bg-gray-500 dark:hover:bg-gray-600',
+      danger: 'bg-red-600 text-white hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600',
     };
 
     // Base animation variants
@@ -49,7 +67,7 @@ const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>(
       pulse: {
         scale: [1, 1.1, 1],
         transition: {
-          duration: 1.5,
+          duration: 1,
           repeat: Infinity,
           repeatType: 'loop' as const,
         },
@@ -59,13 +77,13 @@ const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>(
         transition: {
           duration: 1,
           repeat: Infinity,
-          ease: 'linear',
+          ease: 'linear' as const,
         },
       },
       bounce: {
-        y: [0, -6, 0],
+        y: [0, -5, 0],
         transition: {
-          duration: 0.6,
+          duration: 0.5,
           repeat: Infinity,
           repeatType: 'loop' as const,
         },
@@ -80,13 +98,12 @@ const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>(
       },
     };
 
-    // Interactive motion props
-    const motionProps = {
+    // Interactive motion props - explicitly define them
+    const motionProps: MotionButtonProps = {
       whileHover: { 
         scale: animate === 'none' ? 1.1 : 1,
       },
       whileTap: { scale: 0.95 },
-      // Add specific animation if requested
       animate: animate !== 'none' ? animationVariants[animate] : undefined,
       transition: { type: 'spring', stiffness: 400, damping: 17 },
     };
@@ -104,8 +121,10 @@ const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>(
             isActive && 'ring-2 ring-blue-500',
             className
           )}
+          // Pass only standard HTML button props here
+          {...props} 
+          // Pass explicitly defined motion props separately
           {...motionProps}
-          {...props}
         >
           {icon}
         </MotionButton>
