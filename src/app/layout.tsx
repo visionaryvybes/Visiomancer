@@ -12,7 +12,7 @@ import Script from 'next/script';
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Gumroad & Printful Store",
+  title: "Visiomancer",
   description: "E-commerce site integrating Gumroad and Printful",
 };
 
