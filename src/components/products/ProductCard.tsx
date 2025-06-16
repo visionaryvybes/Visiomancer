@@ -7,6 +7,7 @@ import { HeartIcon as HeartIconSolid, StarIcon } from '@heroicons/react/24/solid
 import { useWishlist } from '@/context/WishlistContext';
 import { useCart } from '@/context/CartContext';
 import { useProducts } from '@/context/ProductsContext';
+import { useConversions } from '@/context/ConversionsContext';
 import toast from 'react-hot-toast';
 import { Product } from '@/types';
 import { getProductById } from '@/lib/api/products';
@@ -61,6 +62,7 @@ export default function ProductCard({
   const { toggleWishlist, isInWishlist } = useWishlist();
   const { addItem } = useCart();
   const { getProductById: getProductFromContext } = useProducts();
+  const { trackAddToCart } = useConversions();
   const [isAdding, setIsAdding] = useState(false);
 
   // Check if product is in wishlist using context
@@ -79,6 +81,14 @@ export default function ProductCard({
     if (productFromContext) {
       console.log('[ProductCard] Found product in context:', productFromContext);
       addItem(productFromContext, 1);
+      
+      // Track conversion event
+      trackAddToCart(
+        productFromContext.id,
+        productFromContext.title,
+        productFromContext.price.min
+      );
+      
       // CartContext shows its own toast
     } else {
       // This case should ideally not happen if products are loaded correctly

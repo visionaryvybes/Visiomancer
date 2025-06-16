@@ -1,24 +1,44 @@
-// Placeholder for Gumroad API interactions
-// TODO: Implement functions to fetch products, handle auth, etc.
+// Updated Gumroad API interactions based on official API documentation
 
-// --- Gumroad API Types (Basic Structure - adjust based on actual API response) ---
+// --- Gumroad API Types (Based on actual API response structure) ---
 interface GumroadProductResponse {
   success: boolean
   products: RawGumroadProduct[]
-  // May include pagination fields
 }
 
 // Define the expected fields from the Gumroad API product object
-// Refer to Gumroad API documentation for the exact structure
+// Based on official API documentation
 export interface RawGumroadProduct {
   id: string
   name: string
   description?: string // Often HTML
-  price: number // Typically in cents
+  price: number // In cents according to API docs
   short_url?: string // The direct purchase link
   preview_url?: string // Primary image URL
+  thumbnail_url?: string // Product thumbnail
   published: boolean
-  // Add other relevant fields like variants (if applicable/available), custom fields etc.
+  tags?: string[]
+  formatted_price?: string
+  currency?: string
+  sales_count?: string
+  sales_usd_cents?: string
+  url?: string // Product file URL
+  custom_summary?: string
+  custom_permalink?: string
+  variants?: Array<{
+    title: string
+    options: Array<{
+      name: string
+      price_difference?: number
+      purchasing_power_parity_prices?: Record<string, number>
+      is_pay_what_you_want?: boolean
+      recurrence_prices?: Record<string, {
+        price_cents: number
+        suggested_price_cents?: number
+        purchasing_power_parity_prices?: Record<string, number>
+      }>
+    }>
+  }>
 }
 
 interface GumroadSingleProductResponse {
@@ -40,10 +60,13 @@ async function fetchGumroadAPI<T>(endpoint: string): Promise<T> {
   console.log(`Fetching Gumroad API: ${url}`)
 
   const response = await fetch(url, {
+    method: 'GET',
     headers: {
-      Authorization: `Bearer ${ACCESS_TOKEN}`,
+      'Authorization': `Bearer ${ACCESS_TOKEN}`,
       'Content-Type': 'application/json',
     },
+    // Add cache settings for better performance
+    next: { revalidate: 300 } // Cache for 5 minutes
   })
 
   if (!response.ok) {
@@ -68,40 +91,51 @@ async function fetchGumroadAPI<T>(endpoint: string): Promise<T> {
 
 // Fetches all published products from Gumroad
 export async function getGumroadProducts(): Promise<RawGumroadProduct[]> {
-  const data = await fetchGumroadAPI<GumroadProductResponse>('/products')
-  // Filter for published products if the API doesn't do it by default
-  return data.products.filter(p => p.published)
+  try {
+    const data = await fetchGumroadAPI<GumroadProductResponse>('/products')
+    // Filter for published products if the API doesn't do it by default
+    return data.products.filter(p => p.published)
+  } catch (error) {
+    console.error('Error fetching Gumroad products:', error)
+    throw error
+  }
 }
 
 // Fetches a single product by its Gumroad ID
 export async function getGumroadProductById(id: string): Promise<RawGumroadProduct | null> {
-  // Remove outer try...catch; let fetchGumroadAPI errors propagate
-  // Inner try...catch in fetchGumroadAPI handles API errors / non-success
-  // Still need to handle the case where the product isn't found (which might not be an error)
   try {
     const data = await fetchGumroadAPI<GumroadSingleProductResponse>(`/products/${id}`)
-    console.log(`[GumroadAPI] Raw data received for product ${id}:`, JSON.stringify(data)); // Log raw data
-    // Ensure product exists in the response before returning
+    console.log(`[GumroadAPI] Raw data received for product ${id}:`, JSON.stringify(data, null, 2));
+    
     if (data && data.product) {
         return data.product;
     } else {
         console.warn(`[GumroadAPI] Product field missing in response for ID ${id}. Response:`, data);
-        return null; // Return null if product field is missing
+        return null;
     }
-  } catch (error: unknown) { // Use unknown instead of any
-    // Check if it's an error and has a message
+  } catch (error: unknown) {
     let errorMessage = 'Unknown error during fetch'
     if (error instanceof Error) {
       errorMessage = error.message
     }
     
     // Specifically check if the error indicates a 404 Not Found scenario
-    if (errorMessage.includes('Status: 404')) { // Example check
+    if (errorMessage.includes('Status: 404')) {
       console.log(`Gumroad product ${id} not found (404).`);
       return null; // Treat 404 as null, not a throw
     } 
     // Re-throw other errors (like auth, network, actual 500s)
     console.error(`Error fetching Gumroad product ${id} (re-throwing):`, error)
-    throw error; // Re-throw the original error object
+    throw error;
   }
+}
+
+// Helper function to get the direct purchase URL for a product
+export function getGumroadPurchaseUrl(product: RawGumroadProduct): string {
+  return product.short_url || `https://gumroad.com/l/${product.custom_permalink || product.id}`
+}
+
+// Helper function to format price from cents to dollars
+export function formatGumroadPrice(priceInCents: number): number {
+  return priceInCents / 100
 } 

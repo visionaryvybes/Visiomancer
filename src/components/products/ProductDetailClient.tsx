@@ -5,6 +5,7 @@ import { Product, ProductImage, ProductVariant, ProductVariantDetail } from '@/t
 import { useCart } from '@/context/CartContext'
 import { useProducts } from '@/context/ProductsContext'
 import { useWishlist } from '@/context/WishlistContext'
+import { usePageTracking } from '@/hooks/usePageTracking'
 import { useState, useEffect, useRef } from 'react'
 import VariantSelector from "@/components/products/VariantSelector"
 import Button from '@/components/ui/Button'
@@ -97,6 +98,13 @@ export default function ProductDetailClient({ product: initialProduct, fetcherEr
   const imageRef = useRef<HTMLDivElement>(null);
   const product = initialProduct; 
   const isProductWishlisted = product ? isInWishlist(product.id) : false;
+
+  // Track page visit for conversions
+  usePageTracking(
+    product?.id,
+    product?.title,
+    'digital-art'
+  );
 
   // --- Image URLs --- 
   const imageUrls: string[] = product?.images?.map((img: ProductImage) => img.url).filter(Boolean) as string[] || [];

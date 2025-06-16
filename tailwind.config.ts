@@ -9,7 +9,13 @@ const config: Config = {
   darkMode: 'class',
   theme: {
     extend: {
-       // Add custom theme extensions if HeroScene relies on them
+      fontFamily: {
+        'heading': ['M PLUS 1 Code', 'monospace'],
+        'base': ['Share Tech Mono', 'monospace'],
+        'sans': ['Share Tech Mono', 'monospace'],
+        'mono': ['Share Tech Mono', 'monospace'],
+        'serif': ['Share Tech Mono', 'monospace'],
+      },
     },
   },
   plugins: [

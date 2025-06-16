@@ -1,16 +1,12 @@
+"use client";
+
 import Button from "@/components/ui/Button";
 import Link from "next/link";
-import { ArrowRight, Sparkles, TrendingUp } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { Product } from "@/types";
-import { useEffect, useState, Suspense } from "react";
-import dynamic from 'next/dynamic';
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-
-// Dynamic import for HeroScene
-const HeroScene = dynamic(() => import('@/components/three/HeroScene'), {
-  loading: () => <div className="absolute inset-0 bg-black/30 flex items-center justify-center text-white rounded-lg">Loading Scene...</div>,
-  ssr: false 
-});
+import Image from "next/image";
 
 interface HeroSectionProps {
   featuredProduct?: Product;
@@ -18,57 +14,72 @@ interface HeroSectionProps {
 
 export default function HeroSection({ featuredProduct }: HeroSectionProps) {
   const [isVisible, setIsVisible] = useState(false);
+  const [imageError, setImageError] = useState(false);
   
   useEffect(() => {
     setIsVisible(true);
   }, []);
 
   return (
-    <section className="w-full max-w-6xl relative overflow-hidden rounded-2xl bg-gradient-to-r from-indigo-900 to-purple-900 mb-16">
-      {/* Animated background pattern */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute right-0 bottom-0 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-blob"></div>
-        <div className="absolute left-20 top-20 w-64 h-64 bg-pink-500/10 rounded-full blur-3xl animate-blob delay-400"></div>
-        <div className="absolute left-1/2 bottom-1/4 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl animate-blob delay-800"></div>
-      </div>
-      
-      <div className="relative z-10 py-20 px-8 md:px-16 flex flex-col md:flex-row items-center">
-        <div className={`md:w-1/2 mb-10 md:mb-0 md:pr-8 transition-all duration-700 ease-in-out ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
-          <span className="inline-block px-3 py-1 bg-white/10 backdrop-blur-sm rounded-full text-sm font-medium mb-4">
-            <Sparkles size={14} className="inline mr-1" /> New Collection 2025
-          </span>
-          <motion.h1
-            className="text-4xl font-bold mb-6 leading-tight md:text-5xl"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-          >
-            Discover Stunning Digital Posters & Wallpapers!
-          </motion.h1>
-          <p className="text-lg mb-8 text-gray-300 max-w-xl mx-auto">
-            High-Resolution (300 DPI) designs for your home or phone. Instant Download via Gumroad – no waiting, no shipping. Start creating your perfect space today!
-          </p>
-          <div className="flex gap-4">
-            <Link href="/products" passHref>
-              <Button size="lg" className="flex items-center gap-2 hover:scale-105 transition-transform shadow-lg shadow-purple-900/30">
-                Shop Now <ArrowRight size={18} />
-              </Button>
-            </Link>
-            <Link href="#trending" passHref>
-              <Button size="lg" className="bg-white/10 hover:bg-white/20 text-white flex items-center gap-2 hover:scale-105 transition-transform backdrop-blur-sm">
-                Trending <TrendingUp size={18} />
-              </Button>
-            </Link>
+    <>
+      {/* Large hero banner - Fully responsive and centered */}
+      <section className="w-full relative overflow-hidden rounded-lg mb-8 sm:mb-12">
+        <div className="w-full h-[300px] sm:h-[400px] md:h-[450px] lg:h-[500px] relative rounded-lg overflow-hidden">
+          {!imageError ? (
+            <>
+              <Image
+                src="/images/banner.jpg"
+                alt="Visiomancer Banner - Premium Digital Art"
+                fill
+                className="object-cover"
+                priority
+                onError={() => setImageError(true)}
+              />
+              {/* Dark overlay for better text readability */}
+              <div className="absolute inset-0 bg-black/40"></div>
+            </>
+          ) : (
+            /* Fallback gradient background */
+            <>
+              <div className="w-full h-full bg-gradient-to-br from-gray-800 via-gray-700 to-gray-900"></div>
+              {/* Animated abstract background pattern */}
+              <div className="absolute inset-0">
+                <div className="absolute inset-0 bg-gradient-to-r from-gray-600/20 via-transparent to-gray-600/20 animate-pulse"></div>
+                <div className="absolute top-1/4 left-1/4 w-16 h-16 sm:w-32 sm:h-32 bg-white/5 rounded-full blur-3xl"></div>
+                <div className="absolute bottom-1/4 right-1/4 w-24 h-24 sm:w-48 sm:h-48 bg-white/5 rounded-full blur-3xl"></div>
+              </div>
+              <div className="absolute bottom-2 right-2 sm:bottom-4 sm:right-4 bg-black/50 text-white text-xs p-2 rounded font-base">
+                Add banner.jpg to /public/images/
+              </div>
+            </>
+          )}
+          
+          {/* Hero text overlay - Fully responsive */}
+          <div className="absolute inset-0 flex items-center justify-center text-center text-white px-4 sm:px-6 lg:px-8 z-10">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8 }}
+              className="w-full max-w-4xl"
+            >
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold mb-3 sm:mb-4 lg:mb-6 font-heading leading-tight">
+                VISIOMANCER
+              </h1>
+              <p className="text-base sm:text-lg md:text-xl lg:text-2xl mb-6 sm:mb-8 lg:mb-10 max-w-2xl mx-auto font-base px-4">
+                Premium Digital Art Designs
+              </p>
+              <Link href="/products">
+                <Button 
+                  size="lg" 
+                  className="bg-white text-black hover:bg-gray-100 font-base px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-base"
+                >
+                  Shop Collection
+                </Button>
+              </Link>
+            </motion.div>
           </div>
         </div>
-        <div className={`md:w-1/2 relative h-64 md:h-80 transition-all duration-700 ease-in-out delay-400 ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
-          <div className="absolute inset-0 transform hover:scale-105 transition-transform duration-300">
-            <Suspense fallback={<div className="absolute inset-0 bg-black/30 flex items-center justify-center text-white rounded-lg">Loading Fallback...</div>}>
-              <HeroScene />
-            </Suspense>
-          </div>
-        </div>
-      </div>
-    </section>
+      </section>
+    </>
   );
 } 

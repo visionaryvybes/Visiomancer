@@ -4,10 +4,13 @@ import React from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useCart } from '@/context/CartContext'
+import { useConversions } from '@/context/ConversionsContext'
 import Button from '@/components/ui/Button'
 import { Trash2, Plus, Minus } from 'lucide-react' // Icons for controls
 import { CartItem, ProductVariant, ProductVariantDetail, ProductSource } from '@/types' // Updated import path
 import { toast } from 'react-hot-toast'
+import StoreLayout from "@/components/layout/StoreLayout"
+import NextImage from 'next/image'
 
 export default function CartPage() {
   const { 
@@ -17,8 +20,11 @@ export default function CartPage() {
     clearCart, 
     getCartTotal, 
     getGumroadItems, // Provided by context
-    isCartLoaded 
+    isCartLoaded,
+    getItemCount
   } = useCart()
+  
+  const { trackCheckout } = useConversions()
 
   console.log('[CartPage] Render. isCartLoaded:', isCartLoaded, 'cartItems:', cartItems);
 
@@ -53,12 +59,30 @@ export default function CartPage() {
   if (!isCartLoaded) {
     console.log('[CartPage] Rendering loading state.');
     return (
-      <main className="flex min-h-screen flex-col items-center p-4 md:p-8 lg:p-12">
-        <div className="w-full max-w-4xl">
-          <h1 className="text-4xl font-bold mb-8 text-center">Your Shopping Cart</h1>
-          <p className="text-center text-gray-500">Loading cart...</p>
-        </div>
-      </main>
+      <StoreLayout>
+        <main className="flex-1 px-4 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-7xl py-16">
+            <div className="text-center">
+              <div className="mb-8">
+                <NextImage 
+                  src="/images/logo.png" 
+                  alt="Visiomancer Logo" 
+                  width={120} 
+                  height={120} 
+                  className="mx-auto object-contain"
+                  priority
+                />
+              </div>
+              <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4 font-heading">
+                Shopping Cart
+              </h1>
+              <p className="text-lg text-gray-600 dark:text-gray-300 mb-8 font-base">
+                {getItemCount() > 0 ? `You have ${getItemCount()} item(s) in your cart` : 'Your cart is empty'}
+              </p>
+            </div>
+          </div>
+        </main>
+      </StoreLayout>
     )
   }
   // --- End Loading State ---
@@ -67,12 +91,30 @@ export default function CartPage() {
   if (isCartLoaded && cartItems.length === 0) {
     console.log('[CartPage] Rendering empty cart state.');
     return (
-      <main className="flex min-h-screen flex-col items-center p-4 md:p-8 lg:p-12">
-        <div className="w-full max-w-4xl">
-          <h1 className="text-4xl font-bold mb-8 text-center">Your Shopping Cart</h1>
-          <p className="text-center text-gray-500">Your cart is currently empty.</p>
-        </div>
-      </main>
+      <StoreLayout>
+        <main className="flex-1 px-4 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-7xl py-16">
+            <div className="text-center">
+              <div className="mb-8">
+                <NextImage 
+                  src="/images/logo.png" 
+                  alt="Visiomancer Logo" 
+                  width={120} 
+                  height={120} 
+                  className="mx-auto object-contain"
+                  priority
+                />
+              </div>
+              <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4 font-heading">
+                Shopping Cart
+              </h1>
+              <p className="text-lg text-gray-600 dark:text-gray-300 mb-8 font-base">
+                Your cart is empty. Start shopping to add items to your cart!
+              </p>
+            </div>
+          </div>
+        </main>
+      </StoreLayout>
     )
   }
 
@@ -80,17 +122,48 @@ export default function CartPage() {
 
   console.log('[CartPage] Rendering cart items.');
 
-  const handleCheckout = async (source: ProductSource) => {
-    // Simplified: Only handle Gumroad
-    if (source === 'gumroad') {
-      const gumroadItems = getGumroadItems(); // Get Gumroad items from context
-      if (gumroadItems.length > 0) {
-        toast('Redirecting to Gumroad for checkout...');
-        window.open('https://gumroad.com/checkout', '_blank'); // Open generic checkout URL
+  const handleCheckout = async () => {
+    const gumroadItems = getGumroadItems();
+    if (gumroadItems.length === 0) {
+      toast.error('No items in cart to checkout.');
+      return;
+    }
+
+    try {
+      toast.loading('Preparing checkout...', { id: 'checkout' });
+      
+      // Track conversion event
+      const productIds = gumroadItems.map(item => item.product.id);
+      const totalValue = getCartTotal();
+      trackCheckout(productIds, totalValue, 'USD', gumroadItems.length);
+      
+      // For Gumroad, we'll open each product in Gumroad's purchase page
+      // If there's only one product, open it directly
+      if (gumroadItems.length === 1) {
+        const item = gumroadItems[0];
+        const purchaseUrl = item.product.gumroadUrl;
+        if (purchaseUrl) {
+          toast.success('Redirecting to Gumroad...', { id: 'checkout' });
+          window.open(purchaseUrl, '_blank');
+        } else {
+          toast.error('Product purchase link not available.', { id: 'checkout' });
+        }
       } else {
-        toast.error('No Gumroad items in the cart to checkout.');
+        // Multiple products - inform user and open each product page
+        toast.success(`Opening ${gumroadItems.length} product pages...`, { id: 'checkout' });
+        gumroadItems.forEach((item, index) => {
+          const purchaseUrl = item.product.gumroadUrl;
+          if (purchaseUrl) {
+            // Small delay between opening windows to prevent popup blocker issues
+            setTimeout(() => {
+              window.open(purchaseUrl, '_blank');
+            }, index * 500);
+          }
+        });
       }
-      // Removed the forEach loop that opened individual product URLs
+    } catch (error) {
+      console.error('Checkout error:', error);
+      toast.error('Failed to initiate checkout. Please try again.', { id: 'checkout' });
     }
   };
 
@@ -208,49 +281,68 @@ export default function CartPage() {
 
   // Restore main page structure
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
-      <h1 className="text-3xl font-bold mb-8">Your Shopping Cart</h1>
-
-      {cartItems.length === 0 ? (
-        <div className="text-center py-12 bg-gray-800 rounded-lg">
-          <p className="text-xl text-gray-400 mb-4">Your cart is empty.</p>
-          <Link href="/products" passHref>
-            <Button>Start Shopping</Button>
-          </Link>
-        </div>
-      ) : (
-        <div className="bg-gray-800/50 backdrop-blur-sm rounded-lg shadow-lg p-6">
-          {/* Render all items (assuming only Gumroad now) */}
-          <div className="mb-8">
-            {/* Removed Gumroad specific title */}
-            {/* <h2 className="text-xl font-semibold mb-4 border-b border-purple-500 pb-2">Digital Products</h2> */} 
-            {renderCartItems(cartItems)} 
-          </div>
-
-          {/* Cart Summary and Checkout */}
-          <div className="border-t border-gray-700 pt-6 mt-8">
-            <div className="flex justify-end items-center mb-4">
-                <h2 className="text-2xl font-bold">Total: ${cartTotal.toFixed(2)}</h2>
+    <StoreLayout>
+      <main className="flex-1 px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl py-16">
+          <div className="text-center">
+            <div className="mb-8">
+              <NextImage 
+                src="/images/logo.png" 
+                alt="Visiomancer Logo" 
+                width={120} 
+                height={120} 
+                className="mx-auto object-contain"
+                priority
+              />
             </div>
-            
-            {/* Delivery Note */} 
-            <p className="text-xs text-gray-400 text-right mb-3">
-              Delivery: Your files will be available to download via Gumroad once payment is confirmed. Check your email for the download link.
+            <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4 font-heading">
+              Shopping Cart
+            </h1>
+            <p className="text-lg text-gray-600 dark:text-gray-300 mb-8 font-base">
+              {getItemCount() > 0 ? `You have ${getItemCount()} item(s) in your cart` : 'Your cart is empty'}
             </p>
             
-            <div className="flex justify-end items-center gap-4">
-              {/* Clear Cart Button */}
-              <Button onClick={clearCart} variant="outline" size="sm" className="text-red-500 border-red-500 hover:bg-red-500/10 hover:text-red-400">
-                Clear Cart
-              </Button>
-              {/* Checkout Button - Updated Text */}
-              <Button onClick={() => handleCheckout('gumroad')} className="bg-pink-600 hover:bg-pink-700">
-                 Proceed to Checkout
-              </Button>
-            </div>
+            {cartItems.length > 0 ? (
+              <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-8 max-w-2xl mx-auto">
+                <div className="space-y-4">
+                  {renderCartItems(cartItems)}
+                  <div className="pt-4 border-t border-gray-300 dark:border-gray-600">
+                    <div className="flex justify-between items-center mb-4">
+                      <p className="text-xl font-bold text-gray-900 dark:text-white">
+                        Total: ${total.toFixed(2)}
+                      </p>
+                      <Button 
+                        onClick={clearCart}
+                        variant="outline"
+                        size="sm"
+                        className="text-red-600 border-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                      >
+                        Clear Cart
+                      </Button>
+                    </div>
+                    <Button 
+                      onClick={handleCheckout}
+                      className="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-3"
+                      size="lg"
+                    >
+                      Checkout on Gumroad
+                    </Button>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 text-center">
+                      You'll be redirected to Gumroad to complete your purchase
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-8 max-w-md mx-auto">
+                <p className="text-gray-600 dark:text-gray-300 font-base">
+                  Your cart is empty. Start shopping to add items to your cart!
+                </p>
+              </div>
+            )}
           </div>
         </div>
-      )}
-    </div>
+      </main>
+    </StoreLayout>
   )
 }

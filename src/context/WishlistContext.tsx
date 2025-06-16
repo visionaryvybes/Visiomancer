@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useState, useContext, useEffect, useCallback, ReactNode } from 'react';
+import toast from 'react-hot-toast';
 
 interface WishlistContextType {
   wishlist: string[]; // Array of product IDs
@@ -22,7 +23,8 @@ export const WishlistProvider = ({ children }: { children: ReactNode }) => {
     try {
       const storedWishlist = localStorage.getItem(LOCAL_STORAGE_KEY);
       if (storedWishlist) {
-        setWishlist(JSON.parse(storedWishlist));
+        const parsed = JSON.parse(storedWishlist);
+        setWishlist(parsed);
       }
     } catch (error) {
       console.error("Error reading wishlist from localStorage:", error);
@@ -44,11 +46,16 @@ export const WishlistProvider = ({ children }: { children: ReactNode }) => {
   const toggleWishlist = useCallback((productId: string) => {
     setWishlist(prev => {
       const isCurrentlyInWishlist = prev.includes(productId);
+      
+      let newWishlist;
       if (isCurrentlyInWishlist) {
-        return prev.filter(id => id !== productId);
+        newWishlist = prev.filter(id => id !== productId);
+        toast.success('Removed from wishlist', { id: `wishlist-${productId}` });
       } else {
-        return [...prev, productId];
+        newWishlist = [...prev, productId];
+        toast.success('Added to wishlist', { id: `wishlist-${productId}` });
       }
+      return newWishlist;
     });
   }, []);
 

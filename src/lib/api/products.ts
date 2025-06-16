@@ -3,21 +3,59 @@ import {
   getGumroadProducts,
   getGumroadProductById,
   RawGumroadProduct,
+  formatGumroadPrice,
+  getGumroadPurchaseUrl,
 } from './gumroad'
 
 // --- Helper Functions for mapping API data ---
 
 function mapGumroadProduct(gumroadData: RawGumroadProduct): Product {
   console.log(`[mapGumroadProduct] Mapping product ID: ${gumroadData.id}, Raw short_url: ${gumroadData.short_url}`);
+  
+  // Handle images - prefer thumbnail_url over preview_url
+  const images: ProductImage[] = []
+  if (gumroadData.thumbnail_url) {
+    images.push({ 
+      url: gumroadData.thumbnail_url, 
+      altText: gumroadData.name 
+    })
+  } else if (gumroadData.preview_url) {
+    images.push({ 
+      url: gumroadData.preview_url, 
+      altText: gumroadData.name 
+    })
+  }
+
+  // Convert variants if they exist
+  const variants: ProductVariant[] = []
+  if (gumroadData.variants && gumroadData.variants.length > 0) {
+    gumroadData.variants.forEach(variant => {
+      variants.push({
+        id: variant.title.toLowerCase().replace(/\s+/g, '_'),
+        name: variant.title,
+        options: variant.options.map(option => option.name)
+      })
+    })
+  }
+
+  // Extract tags from Gumroad data
+  const tags = gumroadData.tags || []
+
   return {
     id: `gumroad-${gumroadData.id}`,
     source: 'gumroad',
     name: gumroadData.name,
-    description: gumroadData.description || '',
-    price: gumroadData.price / 100, // Already checked it's a number in cents
-    images: gumroadData.preview_url ? [{ url: gumroadData.preview_url, altText: gumroadData.name }] : [],
-    gumroadUrl: gumroadData.short_url || undefined,
-    variants: [], // Gumroad basic API doesn't typically expose variants easily
+    slug: gumroadData.custom_permalink || gumroadData.id,
+    description: gumroadData.description || gumroadData.custom_summary || '',
+    price: formatGumroadPrice(gumroadData.price), // Convert from cents
+    images,
+    gumroadUrl: getGumroadPurchaseUrl(gumroadData),
+    variants,
+    tags,
+    // Add additional Gumroad-specific fields
+    isNew: false, // Could be determined by creation date if available
+    isBestSeller: false, // Could be determined by sales_count if available
+    isSale: false, // Could be determined by price differences
   }
 }
 
@@ -32,7 +70,6 @@ export interface GetAllProductsResult {
 }
 
 export async function getAllProducts(sourceFilter: ProductSource | null = null): Promise<GetAllProductsResult> {
-  // Simplified logging as only Gumroad is fetched now
   console.log(`Fetching products... Source: ${sourceFilter === 'gumroad' ? 'gumroad' : 'all (gumroad only)'}`)
   const result: GetAllProductsResult = { products: [], errors: {} };
 
@@ -62,7 +99,6 @@ export async function getAllProducts(sourceFilter: ProductSource | null = null):
         console.error("Gumroad products fetch did not return an array:", gumroadProducts);
         result.errors.gumroad = "Invalid response format from Gumroad fetch";
     }
-    // Removed Printful fetching and processing logic
 
   } catch (fetchError) {
      // Catch errors specifically from getGumroadProducts()
@@ -82,7 +118,6 @@ export async function getProductById(id: string): Promise<Product | null> {
       const productData = await getGumroadProductById(gumroadId)
       return productData ? mapGumroadProduct(productData) : null
     }
-    // Removed Printful ID check
     else {
       console.warn(`Product ID format not recognized: ${id}`)
       return null

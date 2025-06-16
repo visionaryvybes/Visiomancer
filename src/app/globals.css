@@ -35,12 +35,93 @@
   50% { opacity: .9; }
 }
 
-/* Add any other base styles needed */
-body {
-  background-color: black; /* Example */
-  color: white;
-  margin: 0;
-  padding: 0;
+/* Responsive base styles */
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+  
+  html {
+    width: 100%;
+    overflow-x: hidden;
+  }
+  
+  body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    min-height: 100vh;
+    overflow-x: hidden;
+    -webkit-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+  }
+  
+  /* Ensure proper responsive images */
+  img {
+    max-width: 100%;
+    height: auto;
+  }
+  
+  /* Fix text overflow on small screens */
+  h1, h2, h3, h4, h5, h6 {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+}
+
+/* Container and layout utilities */
+@layer utilities {
+  .container-responsive {
+    width: 100%;
+    max-width: 1280px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  
+  @media (min-width: 640px) {
+    .container-responsive {
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
+    }
+  }
+  
+  @media (min-width: 1024px) {
+    .container-responsive {
+      padding-left: 2rem;
+      padding-right: 2rem;
+    }
+  }
+  
+  /* Center content properly */
+  .center-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+  
+  /* Responsive text sizes */
+  .text-responsive-xl {
+    font-size: 1.5rem;
+    line-height: 2rem;
+  }
+  
+  @media (min-width: 640px) {
+    .text-responsive-xl {
+      font-size: 2rem;
+      line-height: 2.5rem;
+    }
+  }
+  
+  @media (min-width: 1024px) {
+    .text-responsive-xl {
+      font-size: 3rem;
+      line-height: 1;
+    }
+  }
 }
 
 :root {

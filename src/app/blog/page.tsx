@@ -1,13 +1,9 @@
 "use client";
 
-import { useSearchParams } from 'next/navigation';
 import StoreLayout from "@/components/layout/StoreLayout";
 import NextImage from 'next/image';
 
-export default function SearchPage() {
-  const searchParams = useSearchParams();
-  const query = searchParams.get('q') || '';
-
+export default function BlogPage() {
   return (
     <StoreLayout>
       <main className="flex-1 px-4 sm:px-6 lg:px-8">
@@ -24,17 +20,15 @@ export default function SearchPage() {
               />
             </div>
             <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4 font-heading">
-              Search Results
+              Blog
             </h1>
-            {query && (
-              <p className="text-lg text-gray-600 dark:text-gray-300 mb-8 font-base">
-                Searching for: "{query}"
-              </p>
-            )}
+            <p className="text-lg text-gray-600 dark:text-gray-300 mb-8 font-base">
+              Insights, tutorials, and inspiration from the world of digital art.
+            </p>
             <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-8 max-w-md mx-auto">
               <p className="text-gray-600 dark:text-gray-300 font-base">
-                Search functionality is coming soon. We're working on building 
-                our product catalog for you to explore.
+                We're working on bringing you amazing content about digital art, 
+                design trends, and creative inspiration. Stay tuned!
               </p>
             </div>
           </div>
