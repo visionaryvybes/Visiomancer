@@ -20,6 +20,9 @@ export const metadata: Metadata = {
     shortcut: '/logo visiomancer.png',
   },
   manifest: '/manifest.json',
+  other: {
+    'p:domain_verify': 'b8fb5a83d7d1a8709f4faa3ca46e1fea',
+  },
 };
 
 export default function RootLayout({
@@ -32,7 +35,6 @@ export default function RootLayout({
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <meta name="p:domain_verify" content="b8fb5a83d7d1a8709f4faa3ca46e1fea" />
         <link 
           href="https://fonts.googleapis.com/css2?family=M+PLUS+1+Code:wght@400;500;700&family=Share+Tech+Mono&display=swap" 
           rel="stylesheet" 
