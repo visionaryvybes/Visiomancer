@@ -51,6 +51,7 @@ export interface Product {
   gumroadUrl?: string
 
   variantImageMap?: Record<string, string> // Keep for now, useful if variants have images
+  files?: string[]; // Array of file paths or URLs
 }
 
 // Interface for Cart Item, including source and selected variant

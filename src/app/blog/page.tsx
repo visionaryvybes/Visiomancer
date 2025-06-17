@@ -2,6 +2,7 @@
 
 import StoreLayout from "@/components/layout/StoreLayout";
 import NextImage from 'next/image';
+import Image from 'next/image';
 
 export default function BlogPage() {
   return (
@@ -9,14 +10,13 @@ export default function BlogPage() {
       <main className="flex-1 px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl py-16">
           <div className="text-center">
-            <div className="mb-8">
-              <NextImage 
-                src="/images/logo.png" 
-                alt="Visiomancer Logo" 
-                width={120} 
-                height={120} 
-                className="mx-auto object-contain"
-                priority
+            <div className="flex justify-center mb-8">
+              <Image
+                src="/logo visiomancer.png"
+                alt="VisionMancer"
+                width={120}
+                height={120}
+                className="object-contain"
               />
             </div>
             <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4 font-heading">

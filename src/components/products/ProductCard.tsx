@@ -85,8 +85,8 @@ export default function ProductCard({
       // Track conversion event
       trackAddToCart(
         productFromContext.id,
-        productFromContext.title,
-        productFromContext.price.min
+        productFromContext.name,
+        productFromContext.price
       );
       
       // CartContext shows its own toast
@@ -160,7 +160,7 @@ export default function ProductCard({
       whileHover="hover"
       className="group relative flex flex-col overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800 shadow-sm transition-shadow hover:shadow-md"
     >
-      <Link href={`/products/${slug || id}`} className="flex flex-col h-full">
+      <Link href={`/products/${encodeURIComponent(slug || id)}`} className="flex flex-col h-full">
         <div className="aspect-square bg-gray-200 dark:bg-gray-700 overflow-hidden relative">
           <Image
             src={imageUrl || '/placeholder.svg'}

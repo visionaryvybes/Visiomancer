@@ -63,7 +63,7 @@ export default function StoreLayout({ children }: StoreLayoutProps) {
     { name: 'Home', href: '/' },
     { name: 'Products', href: '/products' },
     { name: 'About', href: '/about' },
-    { name: 'Analytics', href: '/conversions' },
+    // { name: 'Analytics', href: '/conversions' }, // Hidden from navigation
   ];
 
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -110,7 +110,7 @@ export default function StoreLayout({ children }: StoreLayoutProps) {
             <div className="flex-shrink-0 flex-1 flex justify-center lg:flex-1 lg:justify-start lg:ml-8">
               <Link href="/" className="flex items-center space-x-2 sm:space-x-3 hover:opacity-80 transition-opacity">
                 <NextImage 
-                  src="/images/logo.png" 
+                  src="/logo visiomancer.png" 
                   alt="Visiomancer Logo" 
                   width={40} 
                   height={40} 
@@ -292,7 +292,7 @@ export default function StoreLayout({ children }: StoreLayoutProps) {
             <div className="space-y-4">
               <div className="flex items-center space-x-3">
                 <NextImage 
-                  src="/images/logo.png" 
+                  src="/logo visiomancer.png" 
                   alt="Visiomancer Logo" 
                   width={32} 
                   height={32} 
@@ -303,7 +303,7 @@ export default function StoreLayout({ children }: StoreLayoutProps) {
                 </span>
               </div>
               <p className="text-sm text-gray-600 dark:text-gray-300 font-base">
-                Premium digital art designs and visual assets for creators and businesses.
+                Serving Aesthetics, Wallpapers, Posters and Art.
               </p>
             </div>
 
@@ -313,23 +313,37 @@ export default function StoreLayout({ children }: StoreLayoutProps) {
                 Quick Links
               </h3>
               <ul className="space-y-2">
-                {navLinks.map((link) => (
-                  <li key={link.name}>
-                    <Link 
-                      href={link.href}
-                      className="text-sm text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors font-base"
-                    >
-                      {link.name}
-                    </Link>
-                  </li>
-                ))}
+                <li>
+                  <Link 
+                    href="/"
+                    className="text-sm text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors font-base"
+                  >
+                    Home
+                  </Link>
+                </li>
+                <li>
+                  <Link 
+                    href="/products"
+                    className="text-sm text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors font-base"
+                  >
+                    Products
+                  </Link>
+                </li>
+                <li>
+                  <Link 
+                    href="/about"
+                    className="text-sm text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors font-base"
+                  >
+                    About
+                  </Link>
+                </li>
               </ul>
             </div>
 
-            {/* Support */}
+            {/* Shopping */}
             <div>
               <h3 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider mb-4 font-heading">
-                Support
+                Shopping
               </h3>
               <ul className="space-y-2">
                 <li>
@@ -371,11 +385,33 @@ export default function StoreLayout({ children }: StoreLayoutProps) {
             </div>
           </div>
 
-          {/* Bottom Section */}
+          {/* Bottom Section with Support Links */}
           <div className="mt-8 pt-8 border-t border-gray-200 dark:border-gray-700">
-            <p className="text-center text-sm text-gray-600 dark:text-gray-300 font-base">
-              © 2024 Visiomancer. All rights reserved.
-            </p>
+            <div className="flex flex-col space-y-4">
+              {/* Support Links */}
+              <div className="flex flex-wrap justify-center gap-6 text-sm">
+                <Link href="/returns" className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors font-base">
+                  Returns
+                </Link>
+                <Link href="/shipping" className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors font-base">
+                  Shipping
+                </Link>
+                <Link href="/contact" className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors font-base">
+                  Contact Us
+                </Link>
+                <Link href="/privacy" className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors font-base">
+                  Privacy Policy
+                </Link>
+                <Link href="/terms" className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors font-base">
+                  Terms of Service
+                </Link>
+              </div>
+              
+              {/* Copyright */}
+              <p className="text-center text-sm text-gray-600 dark:text-gray-300 font-base">
+                © {new Date().getFullYear()} Visiomancer. All rights reserved.
+              </p>
+            </div>
           </div>
         </div>
       </footer>

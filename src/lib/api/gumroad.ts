@@ -132,7 +132,9 @@ export async function getGumroadProductById(id: string): Promise<RawGumroadProdu
 
 // Helper function to get the direct purchase URL for a product
 export function getGumroadPurchaseUrl(product: RawGumroadProduct): string {
-  return product.short_url || `https://gumroad.com/l/${product.custom_permalink || product.id}`
+  const baseUrl = product.short_url || `https://gumroad.com/l/${product.custom_permalink || product.id}`
+  // Add ?wanted=true to go directly to checkout instead of product page
+  return `${baseUrl}?wanted=true`
 }
 
 // Helper function to format price from cents to dollars

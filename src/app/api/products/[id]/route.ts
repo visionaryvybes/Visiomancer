@@ -6,8 +6,9 @@ export async function GET(
   request: NextRequest, // Use NextRequest
   { params }: { params: { id: string } } // Destructure params from the second argument
 ) {
-  // Destructure id directly here to ensure it's resolved before use
-  const { id } = params; 
+  // Destructure and decode the URL-encoded ID parameter
+  const { id: rawId } = params;
+  const id = decodeURIComponent(rawId); 
 
   if (!id) {
     // This check might be redundant if the route matching ensures an id, but good practice

@@ -73,9 +73,9 @@ export async function POST(request: NextRequest) {
       customData.currency = event.custom_data.currency;
     }
     
-    // Use order_quantity for num_items
+    // Use num_items (Pinterest API expects this field name)
     if (event.custom_data.num_items) {
-      customData.order_quantity = event.custom_data.num_items;
+      customData.num_items = event.custom_data.num_items;
     }
 
     const pinterestEvent = {

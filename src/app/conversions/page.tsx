@@ -172,7 +172,7 @@ export default function ConversionsPage() {
           <div className="text-center mb-12">
             <div className="mb-8">
               <NextImage 
-                src="/images/logo.png" 
+                src="/logo visiomancer.png" 
                 alt="Visiomancer Logo" 
                 width={120} 
                 height={120} 

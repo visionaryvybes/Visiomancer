@@ -1,6 +1,7 @@
 import { Product } from '@/types'
 import { notFound } from 'next/navigation'
-import ProductDetailClient from '@/components/products/ProductDetailClient' 
+import ProductDetailClient from '@/components/products/ProductDetailClient'
+import StoreLayout from '@/components/layout/StoreLayout'
 // Remove import for ProductDetailSkeleton if not used for Suspense boundary here
 import { getAllProducts, getProductById } from '@/lib/api/products' // Import direct fetchers
 
@@ -51,7 +52,10 @@ interface SerializableError {
 
 // This is now a Server Component
 export default async function ProductDetailPage({ params }: ProductDetailPageProps) {
-  const { id } = params; 
+  // Decode the URL-encoded ID parameter
+  const { id: rawId } = params;
+  const id = decodeURIComponent(rawId);
+  
   let product: Product | null = null;
   let serializableError: SerializableError | undefined = undefined;
 
@@ -78,5 +82,9 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
   }
 
   // Render the Client Component, passing the fetched data/error
-  return <ProductDetailClient product={product} fetcherError={serializableError} />;
+  return (
+    <StoreLayout>
+      <ProductDetailClient product={product} fetcherError={serializableError} />
+    </StoreLayout>
+  );
 }

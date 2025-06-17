@@ -8,16 +8,16 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Visiomancer - Digital Art Store",
-  description: "Premium digital art collections and visual assets",
+  description: "Serving Aesthetics, Wallpapers, Posters and Art - Digital collections for creators",
   icons: {
     icon: [
-      { url: '/images/logo.png', sizes: '32x32', type: 'image/png' },
-      { url: '/images/logo.png', sizes: '16x16', type: 'image/png' },
+      { url: '/logo visiomancer.png', sizes: '32x32', type: 'image/png' },
+      { url: '/logo visiomancer.png', sizes: '16x16', type: 'image/png' },
     ],
     apple: [
-      { url: '/images/logo.png', sizes: '180x180', type: 'image/png' },
+      { url: '/logo visiomancer.png', sizes: '180x180', type: 'image/png' },
     ],
-    shortcut: '/images/logo.png',
+    shortcut: '/logo visiomancer.png',
   },
   manifest: '/manifest.json',
 };
@@ -36,9 +36,9 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=M+PLUS+1+Code:wght@400;500;700&family=Share+Tech+Mono&display=swap" 
           rel="stylesheet" 
         />
-        <link rel="icon" href="/images/logo.png" type="image/png" />
-        <link rel="apple-touch-icon" href="/images/logo.png" />
-        <link rel="shortcut icon" href="/images/logo.png" type="image/png" />
+        <link rel="icon" href="/logo visiomancer.png" type="image/png" />
+        <link rel="apple-touch-icon" href="/logo visiomancer.png" />
+        <link rel="shortcut icon" href="/logo visiomancer.png" type="image/png" />
         <style dangerouslySetInnerHTML={{
           __html: `
             * {

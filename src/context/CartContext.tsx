@@ -155,8 +155,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const updateQuantity = useCallback((itemId: string, selectedVariantId: string | number | undefined, newQuantity: number) => {
     console.log('[CartContext] updateQuantity called:', { itemId, selectedVariantId, newQuantity });
     const cartItemId = selectedVariantId ? `${itemId}-${selectedVariantId}` : itemId;
-    let actionTaken: 'updated' | 'removed' | 'none' = 'none'; // Flag for action
-    let finalAction: 'updated' | 'removed' | 'none' = 'none'; // Variable to hold action across async boundary
 
     setCartItems(prevItems => {
       const itemIndex = prevItems.findIndex(
@@ -169,31 +167,20 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       );
 
       if (itemIndex === -1) { 
-          actionTaken = 'none';
           return prevItems; // Item not found
       }
 
       if (newQuantity <= 0) {
-        actionTaken = 'removed';
-        finalAction = 'removed'; // Store action
-        // Don't toast here
+        // Don't toast here - do it after state update
         return prevItems.filter((_, index) => index !== itemIndex);
       } else {
-        actionTaken = 'updated';
-        finalAction = 'updated'; // Store action
+        // Don't toast here - do it after state update
         const updatedItems = [...prevItems];
         updatedItems[itemIndex] = { ...updatedItems[itemIndex], quantity: newQuantity };
-        // Don't toast here
         return updatedItems;
       }
     });
 
-    // Show toast after state update based on the stored action
-    if (finalAction === 'removed') {
-      toast.success('Item removed from cart.');
-    } else if (finalAction === 'updated') {
-      toast.success('Item quantity updated.');
-    }
     console.log('[CartContext] updateQuantity execution end.');
 
   }, []);
@@ -231,8 +218,24 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
   // --- Filtering Functions ---
   const getGumroadItems = useCallback((): CartItem[] => {
-      // Filter directly for gumroad source
-      return cartItems.filter(item => item && item.product && item.product.source === 'gumroad');
+    const gumroadItems = cartItems.filter(
+      (item) => item && item.product && item.product.source === 'gumroad'
+    );
+
+    const aggregatedItems: { [key: string]: CartItem } = {};
+
+    gumroadItems.forEach((item) => {
+      const { product, quantity } = item;
+      const key = product.id; // Aggregate by base product ID for simplicity
+
+      if (aggregatedItems[key]) {
+        aggregatedItems[key].quantity += quantity;
+      } else {
+        aggregatedItems[key] = { ...item };
+      }
+    });
+    
+    return Object.values(aggregatedItems);
   }, [cartItems]);
 
   // --- Calculate Subtotals ---

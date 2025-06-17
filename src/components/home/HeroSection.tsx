@@ -29,7 +29,7 @@ export default function HeroSection({ featuredProduct }: HeroSectionProps) {
             <>
               <Image
                 src="/images/banner.jpg"
-                alt="Visiomancer Banner - Premium Digital Art"
+                alt="Visiomancer Banner - Aesthetics, Wallpapers, Posters and Art"
                 fill
                 className="object-cover"
                 priority
@@ -66,7 +66,7 @@ export default function HeroSection({ featuredProduct }: HeroSectionProps) {
                 VISIOMANCER
               </h1>
               <p className="text-base sm:text-lg md:text-xl lg:text-2xl mb-6 sm:mb-8 lg:mb-10 max-w-2xl mx-auto font-base px-4">
-                Premium Digital Art Designs
+                Serving Aesthetics, Wallpapers, Posters and Art
               </p>
               <Link href="/products">
                 <Button 

@@ -19,7 +19,7 @@ export default function ProductsPage() {
             <div className="text-center mb-12">
               <div className="mb-8">
                 <NextImage 
-                  src="/images/logo.png" 
+                  src="/logo visiomancer.png" 
                   alt="Visiomancer Logo" 
                   width={120} 
                   height={120} 
@@ -31,7 +31,7 @@ export default function ProductsPage() {
                 All Products
               </h1>
               <p className="text-lg text-gray-600 dark:text-gray-300 mb-8 font-base">
-                Loading our premium digital art collection...
+                Loading our collection of aesthetics, wallpapers, posters and art...
               </p>
             </div>
             <ProductGridSkeleton count={8} />
@@ -50,7 +50,7 @@ export default function ProductsPage() {
             <div className="text-center">
               <div className="mb-8">
                 <NextImage 
-                  src="/images/logo.png" 
+                  src="/logo visiomancer.png" 
                   alt="Visiomancer Logo" 
                   width={120} 
                   height={120} 
@@ -81,7 +81,7 @@ export default function ProductsPage() {
             <div className="text-center">
               <div className="mb-8">
                 <NextImage 
-                  src="/images/logo.png" 
+                  src="/logo visiomancer.png" 
                   alt="Visiomancer Logo" 
                   width={120} 
                   height={120} 
@@ -116,7 +116,7 @@ export default function ProductsPage() {
           <div className="text-center mb-12">
             <div className="mb-8">
               <NextImage 
-                src="/images/logo.png" 
+                src="/logo visiomancer.png" 
                 alt="Visiomancer Logo" 
                 width={120} 
                 height={120} 

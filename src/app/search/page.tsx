@@ -3,6 +3,7 @@
 import { useSearchParams } from 'next/navigation';
 import StoreLayout from "@/components/layout/StoreLayout";
 import NextImage from 'next/image';
+import Image from 'next/image';
 
 export default function SearchPage() {
   const searchParams = useSearchParams();
@@ -14,14 +15,15 @@ export default function SearchPage() {
         <div className="mx-auto max-w-7xl py-16">
           <div className="text-center">
             <div className="mb-8">
-              <NextImage 
-                src="/images/logo.png" 
-                alt="Visiomancer Logo" 
-                width={120} 
-                height={120} 
-                className="mx-auto object-contain"
-                priority
-              />
+              <div className="flex justify-center mb-8">
+                <Image
+                  src="/logo visiomancer.png"
+                  alt="VisionMancer"
+                  width={120}
+                  height={120}
+                  className="object-contain"
+                />
+              </div>
             </div>
             <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4 font-heading">
               Search Results

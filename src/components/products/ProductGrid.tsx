@@ -19,7 +19,7 @@ export default function ProductGrid({ products }: ProductGridProps) {
           key={product.id} 
           id={product.id}
           title={product.name}
-          slug={product.slug || product.id}
+          slug={product.id}
           imageUrl={product.images?.[0]?.url || '/placeholder.jpg'}
           imageAlt={product.name || 'Product image'}
           price={{ min: product.price ?? 0, max: product.maxPrice }}

@@ -28,7 +28,7 @@ export default function Home() {
                 Featured Products
               </h2>
               <p className="text-base sm:text-lg text-gray-600 dark:text-gray-300 font-base max-w-2xl mx-auto px-4">
-                Discover our latest premium digital art designs and visual assets
+                Discover our latest collection of aesthetics, wallpapers, posters and art
               </p>
             </div>
 

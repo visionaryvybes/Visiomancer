@@ -25,14 +25,10 @@ const nextConfig = { // Removed the : NextConfig type annotation
       },
     ],
   },
-  // Added these options to ignore TypeScript errors during build
-  typescript: {
-    // !! WARN !!
-    // Dangerously allow production builds to successfully complete even if
-    // your project has type errors.
-    // !! WARN !!
-    ignoreBuildErrors: true,
-  },
+  // TypeScript errors are now fixed, safe to enable checking
+  // typescript: {
+  //   ignoreBuildErrors: true,
+  // },
 };
 
 module.exports = nextConfig; // Changed export default to module.exports

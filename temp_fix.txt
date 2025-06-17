@@ -5,7 +5,6 @@ import { Product, ProductImage, ProductVariant, ProductVariantDetail } from '@/t
 import { useCart } from '@/context/CartContext'
 import { useProducts } from '@/context/ProductsContext'
 import { useWishlist } from '@/context/WishlistContext'
-import { useConversions } from '@/context/ConversionsContext'
 import { usePageTracking } from '@/hooks/usePageTracking'
 import { useState, useEffect, useRef } from 'react'
 import VariantSelector from "@/components/products/VariantSelector"
@@ -80,7 +79,6 @@ export default function ProductDetailClient({ product: initialProduct, fetcherEr
   const { addItem } = useCart()
   const { products: allProducts, getProductById: getProductFromContext } = useProducts()
   const { wishlist, toggleWishlist, isInWishlist } = useWishlist()
-  const { trackCheckout } = useConversions()
   
   console.log("[ProductDetailClient] allProducts from context:", allProducts);
   // --- End Logging ---
@@ -325,37 +323,6 @@ export default function ProductDetailClient({ product: initialProduct, fetcherEr
     //   toast.error('Could not open product page on Gumroad.');
     // }
   };
-
-  const handleBuyNow = () => {
-    if (!product || !product.gumroadUrl) {
-      toast.error('Product purchase link not available.');
-      return;
-    }
-    
-    toast.loading('Redirecting to checkout...', { id: 'buy-now' });
-    
-    // Track conversion event for direct purchase
-    trackCheckout([product.id], product.price, 'USD', 1);
-    
-    // Build URL with quantity parameter
-    let purchaseUrl = product.gumroadUrl;
-    const baseUrl = purchaseUrl.replace('?wanted=true', '');
-    purchaseUrl = `${baseUrl}?quantity=1&wanted=true`;
-    
-    // Open Gumroad checkout directly
-    window.open(purchaseUrl, '_blank');
-    toast.success('Redirecting to Gumroad checkout...', { id: 'buy-now' });
-  };
-
-  const handleShare = () => {
-    if (navigator.share) {
-      navigator.share({
-        title: product?.name || 'Check out this product',
-        text: product?.description?.substring(0, 100) || 'Found an amazing product',
-        url: window.location.href
-      })
-      .catch(err => {
-        console.error("Share API error:", err); 
         toast.error('Could not share product');
       });
     } else {
@@ -586,7 +553,7 @@ export default function ProductDetailClient({ product: initialProduct, fetcherEr
             {/* Gumroad Add to Cart button */} 
             {product.source === 'gumroad' && (
               <motion.div 
-                className="w-full space-y-3"
+                className="w-full"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
@@ -598,19 +565,6 @@ export default function ProductDetailClient({ product: initialProduct, fetcherEr
             >
                   <ShoppingCart size={20} />
                   <span>Add to Cart</span> 
-            </Button>
-            
-            {/* Buy Now button for direct checkout */}
-            <Button 
-                onClick={handleBuyNow} 
-                variant="outline"
-                size="lg" 
-                className="w-full flex items-center justify-center space-x-2 border-green-600 text-green-600 hover:bg-green-600 hover:text-white transition-colors duration-200"
-            >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="currentColor"/>
-                  </svg>
-                  <span>Buy Now</span> 
             </Button>
               </motion.div>
             )} 
