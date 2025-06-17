@@ -4,6 +4,7 @@ import { ProductsProvider } from '@/context/ProductsContext';
 import { WishlistProvider } from '@/context/WishlistContext';
 import { ConversionsProvider } from '@/context/ConversionsContext';
 import { Toaster } from 'react-hot-toast';
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -63,6 +64,7 @@ export default function RootLayout({
               <CartProvider>
                 {children}
                 <Toaster position="bottom-right" />
+                <Analytics />
               </CartProvider>
             </ConversionsProvider>
           </WishlistProvider>
