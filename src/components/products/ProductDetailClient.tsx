@@ -703,14 +703,13 @@ export default function ProductDetailClient({ product: initialProduct, fetcherEr
                 className="prose prose-sm sm:prose dark:prose-invert max-w-none text-gray-700 dark:text-gray-300"
               >
               {activeTab === 'description' && (
-                  <motion.div variants={staggerChildren}>
+                  <div>
                   {/* Display existing product description using dangerouslySetInnerHTML */}
                   <div dangerouslySetInnerHTML={{ __html: product.description || 'No description provided.' }} />
                   
                   {/* Append the new digital product description block */}
-                    <motion.div 
+                    <div 
                       className="mt-6 pt-6 border-t dark:border-gray-600 space-y-6"
-                      variants={fadeInUp}
                     >
                       <div>
                         <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100 flex items-center">
@@ -718,27 +717,24 @@ export default function ProductDetailClient({ product: initialProduct, fetcherEr
                           Product Details
                         </h3>
                         <ul className="mt-3 space-y-3">
-                          <motion.li 
+                          <li 
                             className="flex items-start"
-                            variants={fadeInUp}
                           >
                             <CheckCircle2 className="mr-2 text-green-500 mt-1 flex-shrink-0" size={18} />
                             <span>Digital Poster, Printable Download</span>
-                          </motion.li>
-                          <motion.li 
+                          </li>
+                          <li 
                             className="flex items-start"
-                            variants={fadeInUp}
                           >
                             <CheckCircle2 className="mr-2 text-green-500 mt-1 flex-shrink-0" size={18} />
                             <span>High-Resolution Digital File – Crisp and detailed design in 300 DPI</span>
-                          </motion.li>
-                          <motion.li 
+                          </li>
+                          <li 
                             className="flex items-start"
-                            variants={fadeInUp}
                           >
                             <CheckCircle2 className="mr-2 text-green-500 mt-1 flex-shrink-0" size={18} />
                             <span>Instant Download – Get your file immediately after purchase via Gumroad, no waiting!</span>
-                          </motion.li>
+                          </li>
                     </ul>
                       </div>
 
@@ -748,54 +744,47 @@ export default function ProductDetailClient({ product: initialProduct, fetcherEr
                           How It Works
                         </h3>
                         <ol className="mt-3 space-y-3">
-                          <motion.li 
+                          <li 
                             className="flex items-start"
-                            variants={fadeInUp}
                           >
                             <div className="bg-purple-100 dark:bg-purple-900 h-6 w-6 rounded-full flex items-center justify-center text-purple-700 dark:text-purple-300 mr-3 mt-0.5 flex-shrink-0 font-semibold text-sm">1</div>
                             <span>Click the "Add to Cart" button and proceed to checkout</span>
-                          </motion.li>
-                          <motion.li 
+                          </li>
+                          <li 
                             className="flex items-start"
-                            variants={fadeInUp}
                           >
                             <div className="bg-purple-100 dark:bg-purple-900 h-6 w-6 rounded-full flex items-center justify-center text-purple-700 dark:text-purple-300 mr-3 mt-0.5 flex-shrink-0 font-semibold text-sm">2</div>
                             <span>Instantly download the file after payment</span>
-                          </motion.li>
-                          <motion.li 
+                          </li>
+                          <li 
                             className="flex items-start"
-                            variants={fadeInUp}
                           >
                             <div className="bg-purple-100 dark:bg-purple-900 h-6 w-6 rounded-full flex items-center justify-center text-purple-700 dark:text-purple-300 mr-3 mt-0.5 flex-shrink-0 font-semibold text-sm">3</div>
                             <span>Print at home or use a professional service</span>
-                          </motion.li>
-                          <motion.li 
+                          </li>
+                          <li 
                             className="flex items-start"
-                            variants={fadeInUp}
                           >
                             <div className="bg-purple-100 dark:bg-purple-900 h-6 w-6 rounded-full flex items-center justify-center text-purple-700 dark:text-purple-300 mr-3 mt-0.5 flex-shrink-0 font-semibold text-sm">4</div>
                             <span>Frame and enjoy your new wall art!</span>
-                          </motion.li>
+                          </li>
                     </ol>
                   </div>
 
-                      <motion.div 
+                      <div 
                         className="mt-4 p-4 bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-400 dark:border-yellow-600 rounded-r-md"
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.5 }}
                       >
                         <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200 flex items-start">
                           <span className="mr-2 text-yellow-500 flex-shrink-0">⚠️</span>
                           <span>Please Note: This is a digital download only. No physical item will be shipped.</span>
                         </p>
-                      </motion.div>
-                    </motion.div>
-                  </motion.div>
+                      </div>
+                    </div>
+                  </div>
                 )}
 
               {activeTab === 'details' && (
-                  <motion.div variants={staggerChildren}>
+                  <div>
                     <h3 className="text-xl font-semibold mb-4">Technical Specifications</h3>
                     <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 mb-6">
                       <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3">
@@ -841,12 +830,11 @@ export default function ProductDetailClient({ product: initialProduct, fetcherEr
                         <span>Commercial reselling or redistribution</span>
                       </li>
                 </ul>
-                  </motion.div>
+                  </div>
               )}
 
               {activeTab === 'reviews' && (
-                  <motion.div 
-                    variants={staggerChildren}
+                  <div 
                     className="space-y-6"
                   >
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -876,11 +864,9 @@ export default function ProductDetailClient({ product: initialProduct, fetcherEr
                               <div key={rating} className="flex items-center gap-2">
                                 <div className="text-sm font-medium w-6">{rating}★</div>
                                 <div className="h-2 flex-1 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                                  <motion.div 
+                                  <div 
                                     className="h-full bg-yellow-400" 
-                                    initial={{ width: 0 }}
-                                    animate={{ width: rating === 5 ? '70%' : rating === 4 ? '20%' : '3%' }}
-                                    transition={{ duration: 1, delay: 0.2 }}
+                                    style={{ width: rating === 5 ? '70%' : rating === 4 ? '20%' : '3%' }}
                                   />
                                 </div>
                                 <div className="text-sm text-gray-500 w-8">
@@ -897,10 +883,9 @@ export default function ProductDetailClient({ product: initialProduct, fetcherEr
                     {reviews.length > 0 ? (
                       <div className="space-y-6">
                         {reviews.map(review => (
-                          <motion.div 
+                          <div 
                             key={review.id} 
                             className="border-b pb-6 dark:border-gray-700"
-                            variants={fadeInUp}
                           >
                             <div className="flex items-center justify-between mb-2">
                               <div className="flex items-center gap-2">
@@ -932,7 +917,7 @@ export default function ProductDetailClient({ product: initialProduct, fetcherEr
                               </button>
                               <button className="text-sm text-gray-500 hover:text-gray-700">Report</button>
                             </div>
-                          </motion.div>
+                          </div>
                         ))}
                         
                         <Button variant="outline" className="w-full">Load More Reviews</Button>
@@ -942,7 +927,7 @@ export default function ProductDetailClient({ product: initialProduct, fetcherEr
                         <p>No reviews yet. Be the first to review this product!</p>
                       </div>
                     )}
-                  </motion.div>
+                  </div>
                 )}
               </motion.div>
             </AnimatePresence>
