@@ -31,29 +31,62 @@ export default function CartPage() {
       return;
     }
 
-    try {
-      toast.loading('Preparing checkout...', { id: 'checkout' });
+    // If only one item in cart, use direct Gumroad link
+    if (gumroadItems.length === 1) {
+      const item = gumroadItems[0];
+      const purchaseUrl = item.product.gumroadUrl;
       
-      toast.success('Opening Gumroad checkout. Please verify quantities match your cart.', { 
-        id: 'checkout', 
-        duration: 8000 
-      });
+      if (purchaseUrl) {
+        const hasParams = purchaseUrl.includes('?');
+        const connector = hasParams ? '&' : '?';
+        const finalUrl = `${purchaseUrl}${connector}quantity=${item.quantity}`;
+        
+        toast.success('Redirecting to Gumroad checkout...', { duration: 3000 });
+        window.open(finalUrl, '_blank');
+        return;
+      }
+    }
 
+    // For multiple items, show limitation and proceed with multiple tabs
+    const totalItems = gumroadItems.reduce((sum, item) => sum + item.quantity, 0);
+    const totalPrice = gumroadItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
+    
+    const proceed = window.confirm(
+      `Due to Gumroad's limitations, your ${gumroadItems.length} different products (${totalItems} items, $${totalPrice.toFixed(2)} total) will open in separate checkout pages.\n\nThis ensures each product quantity is correctly processed.\n\nProceed with checkout?`
+    );
+    
+    if (!proceed) return;
+
+    try {
+      toast.loading('Opening checkout pages...', { id: 'checkout' });
+      
+      // Open each product in a separate tab with correct quantity
       gumroadItems.forEach((item, index) => {
         const purchaseUrl = item.product.gumroadUrl;
         
         if (purchaseUrl) {
-          // Check if URL already has parameters
           const hasParams = purchaseUrl.includes('?');
           const connector = hasParams ? '&' : '?';
           const finalUrl = `${purchaseUrl}${connector}quantity=${item.quantity}`;
           
-          window.open(finalUrl, '_blank');
+          // Stagger tab opening to avoid popup blockers
+          setTimeout(() => {
+            window.open(finalUrl, '_blank');
+          }, index * 800); // Increased delay for better UX
         }
       });
+      
+      toast.success(
+        `Opened ${gumroadItems.length} checkout pages. Complete each purchase to get all your items.`, 
+        { 
+          id: 'checkout', 
+          duration: 8000 
+        }
+      );
+      
     } catch (error) {
       console.error('Checkout error:', error);
-      toast.error('Failed to initiate checkout.', { id: 'checkout' });
+      toast.error('Failed to open checkout pages.', { id: 'checkout' });
     }
   };
 
@@ -155,8 +188,14 @@ export default function CartPage() {
                 Checkout on Gumroad
               </Button>
               <div className="text-xs text-gray-400 mt-2 text-center space-y-1">
-                <p>This will open multiple tabs in your browser, one for each product.</p>
-                <p className="text-yellow-400 font-medium">⚠️ Please verify quantities on each Gumroad page match your cart.</p>
+                {cartItems.length > 1 ? (
+                  <>
+                    <p>⚠️ Multiple products will open separate checkout pages due to Gumroad limitations.</p>
+                    <p className="text-yellow-400 font-medium">Complete each purchase to receive all your items.</p>
+                  </>
+                ) : (
+                  <p>This will redirect you to secure Gumroad checkout.</p>
+                )}
               </div>
             </div>
           </div>
