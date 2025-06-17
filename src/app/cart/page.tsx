@@ -48,12 +48,20 @@ export default function CartPage() {
         
         console.log('[DEBUG] Opening single item URL:', finalUrl);
         toast.success('Redirecting to Gumroad checkout...', { duration: 3000 });
-        window.open(finalUrl, '_blank');
+        
+        // Use dynamic anchor method instead of window.open
+        const anchor = document.createElement('a');
+        anchor.href = finalUrl;
+        anchor.target = '_blank';
+        anchor.rel = 'noopener noreferrer';
+        document.body.appendChild(anchor);
+        anchor.click();
+        document.body.removeChild(anchor);
         return;
       }
     }
 
-    // For multiple items, show limitation and proceed with multiple tabs
+    // For multiple items, show better options
     console.log('[DEBUG] Multiple items checkout path');
     const totalItems = gumroadItems.reduce((sum, item) => sum + item.quantity, 0);
     const totalPrice = gumroadItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
@@ -63,108 +71,236 @@ export default function CartPage() {
       totalPrice,
       itemCount: gumroadItems.length
     });
-    
-    const proceed = window.confirm(
-      `Due to Gumroad's limitations, your ${gumroadItems.length} different products (${totalItems} items, $${totalPrice.toFixed(2)} total) will open in separate checkout pages.\n\nThis ensures each product quantity is correctly processed.\n\nProceed with checkout?`
-    );
-    
-    if (!proceed) {
-      console.log('[DEBUG] User cancelled checkout');
-      return;
-    }
 
-    try {
-      toast.loading('Opening checkout pages...', { id: 'checkout' });
-      
-      console.log('[DEBUG] About to open', gumroadItems.length, 'tabs');
-      
-      // Try to open the first tab immediately (better chance to bypass popup blockers)
-      const firstItem = gumroadItems[0];
-      if (firstItem?.product.gumroadUrl) {
-        const hasParams = firstItem.product.gumroadUrl.includes('?');
-        const connector = hasParams ? '&' : '?';
-        const firstUrl = `${firstItem.product.gumroadUrl}${connector}quantity=${firstItem.quantity}`;
+    // Create a modal with checkout options
+    const checkoutModal = document.createElement('div');
+    checkoutModal.id = 'checkout-modal';
+    checkoutModal.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 10000;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    `;
+
+    const modalContent = document.createElement('div');
+    modalContent.style.cssText = `
+      background: white;
+      border-radius: 12px;
+      padding: 32px;
+      max-width: 600px;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+      color: #333;
+    `;
+
+    const checkoutUrls = gumroadItems.map(item => {
+      const hasParams = item.product.gumroadUrl?.includes('?');
+      const connector = hasParams ? '&' : '?';
+      return {
+        name: item.product.name,
+        quantity: item.quantity,
+        price: item.product.price,
+        total: (item.product.price * item.quantity).toFixed(2),
+        url: `${item.product.gumroadUrl}${connector}quantity=${item.quantity}`
+      };
+    });
+
+    modalContent.innerHTML = `
+      <div style="text-align: center; margin-bottom: 24px;">
+        <h2 style="margin: 0 0 16px; color: #111; font-size: 24px; font-weight: 600;">Complete Your Purchase</h2>
+        <p style="margin: 0; color: #666; font-size: 16px;">
+          ${gumroadItems.length} products • ${totalItems} items • $${totalPrice.toFixed(2)} total
+        </p>
+      </div>
+
+      <div style="background: #f8f9fa; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
+        <h3 style="margin: 0 0 16px; color: #333; font-size: 18px;">📝 Your Items:</h3>
+        ${checkoutUrls.map((item, i) => `
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: ${i < checkoutUrls.length - 1 ? '1px solid #e9ecef' : 'none'};">
+            <div>
+              <div style="font-weight: 500; color: #333;">${item.name}</div>
+              <div style="color: #666; font-size: 14px;">${item.quantity} × $${item.price.toFixed(2)}</div>
+            </div>
+            <div style="font-weight: 600; color: #333;">$${item.total}</div>
+          </div>
+        `).join('')}
+      </div>
+
+      <div style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; padding: 16px; margin-bottom: 24px;">
+        <h4 style="margin: 0 0 8px; color: #856404; font-size: 16px;">⚠️ Gumroad Limitation</h4>
+        <p style="margin: 0; color: #856404; font-size: 14px; line-height: 1.4;">
+          Gumroad doesn't support multi-product checkout via external sites. You'll need to complete separate purchases for each product.
+        </p>
+      </div>
+
+      <div style="margin-bottom: 32px;">
+        <h3 style="margin: 0 0 16px; color: #333; font-size: 18px;">Choose Your Checkout Method:</h3>
         
-        console.log('[DEBUG] Opening first tab immediately:', firstUrl);
-        const firstTab = window.open(firstUrl, '_blank');
+        <button id="open-all-tabs" style="
+          width: 100%;
+          background: #6366f1;
+          color: white;
+          border: none;
+          border-radius: 8px;
+          padding: 16px;
+          font-size: 16px;
+          font-weight: 600;
+          cursor: pointer;
+          margin-bottom: 12px;
+          transition: background 0.2s;
+        " onmouseover="this.style.background='#4f46e5'" onmouseout="this.style.background='#6366f1'">
+          🚀 Open All Checkout Pages (${gumroadItems.length} tabs)
+        </button>
+
+        <button id="manual-links" style="
+          width: 100%;
+          background: #10b981;
+          color: white;
+          border: none;
+          border-radius: 8px;
+          padding: 16px;
+          font-size: 16px;
+          font-weight: 600;
+          cursor: pointer;
+          margin-bottom: 12px;
+          transition: background 0.2s;
+        " onmouseover="this.style.background='#059669'" onmouseout="this.style.background='#10b981'">
+          📋 Show Manual Links (Popup-Safe)
+        </button>
+      </div>
+
+      <div id="manual-links-section" style="display: none; margin-bottom: 24px;">
+        <h4 style="margin: 0 0 16px; color: #333; font-size: 16px;">Click each link to complete your purchases:</h4>
+        ${checkoutUrls.map((item, i) => `
+          <a href="${item.url}" target="_blank" rel="noopener noreferrer" style="
+            display: block;
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+            text-decoration: none;
+            color: #333;
+            transition: all 0.2s;
+          " onmouseover="this.style.background='#e9ecef'; this.style.borderColor='#6366f1';" onmouseout="this.style.background='#f8f9fa'; this.style.borderColor='#e9ecef';">
+            <div style="font-weight: 600; margin-bottom: 4px;">${i + 1}. ${item.name}</div>
+            <div style="color: #666; font-size: 14px;">${item.quantity} items • $${item.total}</div>
+          </a>
+        `).join('')}
+      </div>
+
+      <button id="close-modal" style="
+        width: 100%;
+        background: #6b7280;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 12px;
+        font-size: 14px;
+        cursor: pointer;
+        transition: background 0.2s;
+      " onmouseover="this.style.background='#4b5563'" onmouseout="this.style.background='#6b7280'">
+        Close
+      </button>
+    `;
+
+    checkoutModal.appendChild(modalContent);
+    document.body.appendChild(checkoutModal);
+
+    // Add event listeners
+    const openAllBtn = modalContent.querySelector('#open-all-tabs');
+    const manualLinksBtn = modalContent.querySelector('#manual-links');
+    const manualLinksSection = modalContent.querySelector('#manual-links-section');
+    const closeBtn = modalContent.querySelector('#close-modal');
+
+    openAllBtn?.addEventListener('click', () => {
+      console.log('[DEBUG] User chose to open all tabs');
+      
+      // Helper function to open URL reliably
+      const openUrlReliably = (url: string, index: number) => {
+        console.log(`[DEBUG] Attempting to open tab ${index + 1}:`, url);
         
-        if (!firstTab) {
-          console.log('[DEBUG] First tab was blocked - showing manual links');
-          // If popup blocked, show manual links
-          const urls = gumroadItems.map(item => {
-            const hasParams = item.product.gumroadUrl?.includes('?');
-            const connector = hasParams ? '&' : '?';
-            return {
-              name: item.product.name,
-              quantity: item.quantity,
-              url: `${item.product.gumroadUrl}${connector}quantity=${item.quantity}`
-            };
+        // Method 1: Try window.open first
+        const newWindow = window.open(url, `_blank_${index}`, 'noopener,noreferrer');
+        
+        // Check if window.open was blocked
+        if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+          console.log(`[DEBUG] window.open blocked for tab ${index + 1}, using anchor method`);
+          
+          // Method 2: Fallback to dynamic anchor (more reliable)
+          const anchor = document.createElement('a');
+          anchor.href = url;
+          anchor.target = '_blank';
+          anchor.rel = 'noopener noreferrer';
+          anchor.style.display = 'none'; // Hide anchor
+          document.body.appendChild(anchor);
+          
+          // Simulate click event with ctrl key to help bypass blockers
+          const clickEvent = new MouseEvent('click', {
+            view: window,
+            bubbles: true,
+            cancelable: true,
+            ctrlKey: true // Ctrl+click helps bypass popup blockers
           });
           
-          toast.error('Popup blocked! Please manually open these links:', { id: 'checkout', duration: 10000 });
+          anchor.dispatchEvent(clickEvent);
+          document.body.removeChild(anchor);
           
-          // Create a temporary div with clickable links
-          const linkDiv = document.createElement('div');
-          linkDiv.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;color:black;padding:20px;border:2px solid black;z-index:9999;max-width:500px;';
-          linkDiv.innerHTML = `
-            <h3>Complete Your Checkout</h3>
-            <p>Click each link to complete your purchase:</p>
-            ${urls.map((item, i) => `
-              <p><a href="${item.url}" target="_blank" style="color:blue;text-decoration:underline;">
-                ${i + 1}. ${item.name} (${item.quantity} items)
-              </a></p>
-            `).join('')}
-            <button onclick="this.parentElement.remove()" style="margin-top:10px;padding:5px 10px;">Close</button>
-          `;
-          document.body.appendChild(linkDiv);
-          return;
-        }
-      }
-      
-      // Open remaining tabs with delays
-      for (let i = 1; i < gumroadItems.length; i++) {
-        const item = gumroadItems[i];
-        const purchaseUrl = item.product.gumroadUrl;
-        
-        console.log(`[DEBUG] Processing item ${i + 1}/${gumroadItems.length}:`, {
-          name: item.product.name,
-          quantity: item.quantity,
-          url: purchaseUrl
-        });
-        
-        if (purchaseUrl) {
-          const hasParams = purchaseUrl.includes('?');
-          const connector = hasParams ? '&' : '?';
-          const finalUrl = `${purchaseUrl}${connector}quantity=${item.quantity}`;
-          
-          console.log(`[DEBUG] Will open tab ${i + 1} after ${i * 1000}ms delay:`, finalUrl);
-          
-          // Stagger remaining tabs with longer delays
-          setTimeout(() => {
-            console.log(`[DEBUG] Opening tab ${i + 1}:`, finalUrl);
-            const tab = window.open(finalUrl, '_blank');
-            if (!tab) {
-              console.log(`[DEBUG] Tab ${i + 1} was blocked`);
-              toast.error(`Tab ${i + 1} blocked. Please manually open: ${item.product.name}`, { duration: 5000 });
-            }
-          }, i * 1000); // 1 second delay between tabs
+          console.log(`[DEBUG] Anchor method used for tab ${index + 1}`);
+          return false; // Indicates fallback was used
         } else {
-          console.log(`[DEBUG] No URL for item ${i + 1}:`, item.product.name);
+          console.log(`[DEBUG] window.open succeeded for tab ${index + 1}`);
+          return true; // Indicates window.open worked
         }
+      };
+      
+      // Open first tab immediately (best chance to succeed)
+      if (checkoutUrls.length > 0) {
+        openUrlReliably(checkoutUrls[0].url, 0);
       }
       
-      toast.success(
-        `Opening ${gumroadItems.length} checkout pages. Complete each purchase to get all your items.`, 
-        { 
-          id: 'checkout', 
-          duration: 8000 
-        }
-      );
-      
-    } catch (error) {
-      console.error('Checkout error:', error);
-      toast.error('Failed to open checkout pages.', { id: 'checkout' });
-    }
+      // Open remaining tabs with staggered timing
+      checkoutUrls.slice(1).forEach((item, index) => {
+        const actualIndex = index + 1; // Adjust for slice
+        console.log(`[DEBUG] Scheduling tab ${actualIndex + 1} for ${actualIndex * 800}ms delay`);
+        
+        setTimeout(() => {
+          openUrlReliably(item.url, actualIndex);
+        }, actualIndex * 800); // 800ms delay between subsequent tabs
+      });
+
+      toast.success(`Opening ${gumroadItems.length} checkout pages. Check for popup notifications!`, { duration: 8000 });
+      document.body.removeChild(checkoutModal);
+    });
+
+    manualLinksBtn?.addEventListener('click', () => {
+      console.log('[DEBUG] User chose manual links');
+      if (manualLinksSection) {
+        (manualLinksSection as HTMLElement).style.display = 'block';
+        (manualLinksBtn as HTMLElement).style.display = 'none';
+      }
+    });
+
+    closeBtn?.addEventListener('click', () => {
+      document.body.removeChild(checkoutModal);
+    });
+
+    // Close modal when clicking outside
+    checkoutModal.addEventListener('click', (e) => {
+      if (e.target === checkoutModal) {
+        document.body.removeChild(checkoutModal);
+      }
+    });
+
+    toast.success('Checkout options ready!', { duration: 3000 });
   };
 
   if (!isCartLoaded) {
