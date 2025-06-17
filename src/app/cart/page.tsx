@@ -26,6 +26,10 @@ export default function CartPage() {
   const handleCheckout = async () => {
     const gumroadItems = getGumroadItems();
     
+    console.log('[DEBUG] Cart checkout - gumroadItems:', gumroadItems);
+    console.log('[DEBUG] Cart checkout - gumroadItems.length:', gumroadItems.length);
+    console.log('[DEBUG] Cart checkout - cartItems.length:', cartItems.length);
+    
     if (gumroadItems.length === 0) {
       toast.error('No items in cart to checkout.');
       return;
@@ -33,6 +37,7 @@ export default function CartPage() {
 
     // If only one item in cart, use direct Gumroad link
     if (gumroadItems.length === 1) {
+      console.log('[DEBUG] Single item checkout path');
       const item = gumroadItems[0];
       const purchaseUrl = item.product.gumroadUrl;
       
@@ -41,6 +46,7 @@ export default function CartPage() {
         const connector = hasParams ? '&' : '?';
         const finalUrl = `${purchaseUrl}${connector}quantity=${item.quantity}`;
         
+        console.log('[DEBUG] Opening single item URL:', finalUrl);
         toast.success('Redirecting to Gumroad checkout...', { duration: 3000 });
         window.open(finalUrl, '_blank');
         return;
@@ -48,36 +54,107 @@ export default function CartPage() {
     }
 
     // For multiple items, show limitation and proceed with multiple tabs
+    console.log('[DEBUG] Multiple items checkout path');
     const totalItems = gumroadItems.reduce((sum, item) => sum + item.quantity, 0);
     const totalPrice = gumroadItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
+    
+    console.log('[DEBUG] Multiple items details:', {
+      totalItems,
+      totalPrice,
+      itemCount: gumroadItems.length
+    });
     
     const proceed = window.confirm(
       `Due to Gumroad's limitations, your ${gumroadItems.length} different products (${totalItems} items, $${totalPrice.toFixed(2)} total) will open in separate checkout pages.\n\nThis ensures each product quantity is correctly processed.\n\nProceed with checkout?`
     );
     
-    if (!proceed) return;
+    if (!proceed) {
+      console.log('[DEBUG] User cancelled checkout');
+      return;
+    }
 
     try {
       toast.loading('Opening checkout pages...', { id: 'checkout' });
       
-      // Open each product in a separate tab with correct quantity
-      gumroadItems.forEach((item, index) => {
+      console.log('[DEBUG] About to open', gumroadItems.length, 'tabs');
+      
+      // Try to open the first tab immediately (better chance to bypass popup blockers)
+      const firstItem = gumroadItems[0];
+      if (firstItem?.product.gumroadUrl) {
+        const hasParams = firstItem.product.gumroadUrl.includes('?');
+        const connector = hasParams ? '&' : '?';
+        const firstUrl = `${firstItem.product.gumroadUrl}${connector}quantity=${firstItem.quantity}`;
+        
+        console.log('[DEBUG] Opening first tab immediately:', firstUrl);
+        const firstTab = window.open(firstUrl, '_blank');
+        
+        if (!firstTab) {
+          console.log('[DEBUG] First tab was blocked - showing manual links');
+          // If popup blocked, show manual links
+          const urls = gumroadItems.map(item => {
+            const hasParams = item.product.gumroadUrl?.includes('?');
+            const connector = hasParams ? '&' : '?';
+            return {
+              name: item.product.name,
+              quantity: item.quantity,
+              url: `${item.product.gumroadUrl}${connector}quantity=${item.quantity}`
+            };
+          });
+          
+          toast.error('Popup blocked! Please manually open these links:', { id: 'checkout', duration: 10000 });
+          
+          // Create a temporary div with clickable links
+          const linkDiv = document.createElement('div');
+          linkDiv.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;color:black;padding:20px;border:2px solid black;z-index:9999;max-width:500px;';
+          linkDiv.innerHTML = `
+            <h3>Complete Your Checkout</h3>
+            <p>Click each link to complete your purchase:</p>
+            ${urls.map((item, i) => `
+              <p><a href="${item.url}" target="_blank" style="color:blue;text-decoration:underline;">
+                ${i + 1}. ${item.name} (${item.quantity} items)
+              </a></p>
+            `).join('')}
+            <button onclick="this.parentElement.remove()" style="margin-top:10px;padding:5px 10px;">Close</button>
+          `;
+          document.body.appendChild(linkDiv);
+          return;
+        }
+      }
+      
+      // Open remaining tabs with delays
+      for (let i = 1; i < gumroadItems.length; i++) {
+        const item = gumroadItems[i];
         const purchaseUrl = item.product.gumroadUrl;
+        
+        console.log(`[DEBUG] Processing item ${i + 1}/${gumroadItems.length}:`, {
+          name: item.product.name,
+          quantity: item.quantity,
+          url: purchaseUrl
+        });
         
         if (purchaseUrl) {
           const hasParams = purchaseUrl.includes('?');
           const connector = hasParams ? '&' : '?';
           const finalUrl = `${purchaseUrl}${connector}quantity=${item.quantity}`;
           
-          // Stagger tab opening to avoid popup blockers
+          console.log(`[DEBUG] Will open tab ${i + 1} after ${i * 1000}ms delay:`, finalUrl);
+          
+          // Stagger remaining tabs with longer delays
           setTimeout(() => {
-            window.open(finalUrl, '_blank');
-          }, index * 800); // Increased delay for better UX
+            console.log(`[DEBUG] Opening tab ${i + 1}:`, finalUrl);
+            const tab = window.open(finalUrl, '_blank');
+            if (!tab) {
+              console.log(`[DEBUG] Tab ${i + 1} was blocked`);
+              toast.error(`Tab ${i + 1} blocked. Please manually open: ${item.product.name}`, { duration: 5000 });
+            }
+          }, i * 1000); // 1 second delay between tabs
+        } else {
+          console.log(`[DEBUG] No URL for item ${i + 1}:`, item.product.name);
         }
-      });
+      }
       
       toast.success(
-        `Opened ${gumroadItems.length} checkout pages. Complete each purchase to get all your items.`, 
+        `Opening ${gumroadItems.length} checkout pages. Complete each purchase to get all your items.`, 
         { 
           id: 'checkout', 
           duration: 8000 
