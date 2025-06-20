@@ -80,7 +80,7 @@ export default function ProductDetailClient({ product: initialProduct, fetcherEr
   const { addItem } = useCart()
   const { products: allProducts, getProductById: getProductFromContext } = useProducts()
   const { wishlist, toggleWishlist, isInWishlist } = useWishlist()
-  const { trackCheckout, getUserEmail } = useConversions()
+  const { trackCheckout, trackAddToCart, getUserEmail } = useConversions()
   
   console.log("[ProductDetailClient] allProducts from context:", allProducts);
   // --- End Logging ---
@@ -166,27 +166,8 @@ export default function ProductDetailClient({ product: initialProduct, fetcherEr
     }
   }, [product]);
 
-  // --- Pinterest PageVisit Event Tracking ---
-  useEffect(() => {
-    // Use initialProduct prop directly
-    if (initialProduct && window.pintrk) {
-      console.log(`Tracking Pinterest PageVisit for product: ${initialProduct.id}`);
-      const eventData = {
-        line_items: [
-          {
-            product_id: initialProduct.id, // Use the ID matching your Pinterest Catalog
-            product_name: initialProduct.name, // Recommended
-            // product_category: initialProduct.category, // Optional: Add if available
-            // product_price: initialProduct.price, // Optional: Add base price if available
-          }
-        ]
-        // Alternatively, use content_ids: [initialProduct.id]
-      };
-      // No options needed as email isn't available
-      window.pintrk('track', 'PageVisit', eventData);
-    }
-    // Run this effect only when the initialProduct prop changes (i.e., on page load for this product)
-  }, [initialProduct]);
+  // --- Note: Pinterest tracking is now handled by usePageTracking hook ---
+  // This avoids duplicate PageVisit events
 
   // Update Image on Variant Change (existing effect)
   useEffect(() => {
@@ -313,17 +294,15 @@ export default function ProductDetailClient({ product: initialProduct, fetcherEr
 
   const handleAddToCart = () => {
     if (!product) return;
+    
+    const userEmail = getUserEmail();
+    
+    // Track conversion event first
+    trackAddToCart(product.id, product.name, product.price, 'USD', userEmail || undefined);
+    
+    // Then add to cart
+    addItem(product, 1);
     toast.success(`${product.name} added to cart!`);
-    // Updated to use the new addItem method instead of addToCart
-    addItem(product, 1); // *** Use addItem instead of addToCart ***
-
-    // Remove the direct Gumroad link opening
-    // if (product && product.source === 'gumroad' && product.gumroadUrl) {
-    //    window.open(product.gumroadUrl, '_blank');
-    // } else {
-    //   console.warn('Cannot proceed to Gumroad:', { product });
-    //   toast.error('Could not open product page on Gumroad.');
-    // }
   };
 
   const handleBuyNow = () => {
@@ -336,7 +315,8 @@ export default function ProductDetailClient({ product: initialProduct, fetcherEr
     
     // Track conversion event for direct purchase with email if available
     const userEmail = getUserEmail();
-    trackCheckout([product.id], product.price, 'USD', 1, userEmail || undefined);
+    const orderId = `order_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    trackCheckout([product.id], product.price, 'USD', 1, userEmail || undefined, orderId);
     
     // Build URL with quantity parameter
     let purchaseUrl = product.gumroadUrl;

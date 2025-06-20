@@ -96,33 +96,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     }
     console.log('[CartContext] !!! addItem function execution end !!!'); // Log end
     
-    // --- Start Pinterest AddToCart Event ---
-    const trackPinterestAddToCart = () => { // Made synchronous as hashing is removed
-      if (window.pintrk) {
-        // --- Removed Email Hashing/Retrieval ---
-        const eventData = {
-          value: (parseFloat(String(item.price)) * quantity).toFixed(2),
-          currency: 'USD', // Replace with your store's currency if different
-          order_quantity: quantity,
-          line_items: [
-            {
-              product_id: item.id, // Use the ID matching your Pinterest Catalog
-              product_name: item.name, // Optional but recommended
-              product_price: item.price, // Optional
-              // product_category: item.category, // Optional: Add if available
-            }
-          ]
-          // Alternatively, use content_ids: [item.id]
-        };
-        
-        // No options needed if email isn't available
-        console.log('Tracking Pinterest AddToCart:', { eventData });
-        window.pintrk('track', 'AddToCart', eventData);
-      }
-    };
-    // Fire the tracking event directly
-    trackPinterestAddToCart();
-    // --- End Pinterest AddToCart Event ---
+    // Note: Pinterest conversion tracking is now handled by ConversionsContext
+    // This avoids duplicate tracking events
 
   }, []);
 

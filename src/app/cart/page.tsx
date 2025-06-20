@@ -44,8 +44,9 @@ export default function CartPage() {
     const productIds = gumroadItems.map(item => item.product.id);
     const totalValue = gumroadItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
     const totalItemsCount = gumroadItems.reduce((sum, item) => sum + item.quantity, 0);
+    const orderId = `order_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     
-    trackCheckout(productIds, totalValue, 'USD', totalItemsCount, userEmail || undefined);
+    trackCheckout(productIds, totalValue, 'USD', totalItemsCount, userEmail || undefined, orderId);
 
     // If only one item in cart, use direct Gumroad link
     if (gumroadItems.length === 1) {
@@ -84,7 +85,7 @@ export default function CartPage() {
       itemCount: gumroadItems.length
     });
 
-    // Create a modal with checkout options
+    // Create a beautiful professional checkout modal
     const checkoutModal = document.createElement('div');
     checkoutModal.id = 'checkout-modal';
     checkoutModal.style.cssText = `
@@ -103,14 +104,15 @@ export default function CartPage() {
 
     const modalContent = document.createElement('div');
     modalContent.style.cssText = `
-      background: white;
-      border-radius: 12px;
-      padding: 32px;
-      max-width: 600px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 20px;
+      padding: 0;
+      max-width: 500px;
       max-height: 80vh;
-      overflow-y: auto;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-      color: #333;
+      overflow: hidden;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
+      color: white;
+      position: relative;
     `;
 
     const checkoutUrls = gumroadItems.map(item => {
@@ -126,115 +128,146 @@ export default function CartPage() {
     });
 
     modalContent.innerHTML = `
-      <div style="text-align: center; margin-bottom: 24px;">
-        <h2 style="margin: 0 0 16px; color: #111; font-size: 24px; font-weight: 600;">Complete Your Purchase</h2>
-        <p style="margin: 0; color: #666; font-size: 16px;">
-          ${gumroadItems.length} products • ${totalItems} items • $${totalPrice.toFixed(2)} total
-        </p>
-      </div>
-
-      <div style="background: #f8f9fa; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
-        <h3 style="margin: 0 0 16px; color: #333; font-size: 18px;">📝 Your Items:</h3>
-        ${checkoutUrls.map((item, i) => `
-          <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: ${i < checkoutUrls.length - 1 ? '1px solid #e9ecef' : 'none'};">
-            <div>
-              <div style="font-weight: 500; color: #333;">${item.name}</div>
-              <div style="color: #666; font-size: 14px;">${item.quantity} × $${item.price.toFixed(2)}</div>
-            </div>
-            <div style="font-weight: 600; color: #333;">$${item.total}</div>
-          </div>
-        `).join('')}
-      </div>
-
-      <div style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; padding: 16px; margin-bottom: 24px;">
-        <h4 style="margin: 0 0 8px; color: #856404; font-size: 16px;">⚠️ Gumroad Limitation</h4>
-        <p style="margin: 0; color: #856404; font-size: 14px; line-height: 1.4;">
-          Gumroad doesn't support multi-product checkout via external sites. You'll need to complete separate purchases for each product.
-        </p>
-      </div>
-
-      <div style="margin-bottom: 32px;">
-        <h3 style="margin: 0 0 16px; color: #333; font-size: 18px;">Choose Your Checkout Method:</h3>
+      <!-- Header -->
+      <div style="background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); padding: 24px; text-align: center; position: relative;">
+        <button id="close-modal" style="
+          position: absolute;
+          top: 16px;
+          right: 16px;
+          background: rgba(255,255,255,0.2);
+          border: none;
+          border-radius: 50%;
+          width: 32px;
+          height: 32px;
+          color: white;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 18px;
+          transition: all 0.2s;
+        " onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">
+          ×
+        </button>
         
-        <button id="open-all-tabs" style="
-          width: 100%;
-          background: #6366f1;
-          color: white;
-          border: none;
-          border-radius: 8px;
-          padding: 16px;
-          font-size: 16px;
-          font-weight: 600;
-          cursor: pointer;
-          margin-bottom: 12px;
-          transition: background 0.2s;
-        " onmouseover="this.style.background='#4f46e5'" onmouseout="this.style.background='#6366f1'">
-          🚀 Open All Checkout Pages (${gumroadItems.length} tabs)
-        </button>
-
-        <button id="manual-links" style="
-          width: 100%;
-          background: #10b981;
-          color: white;
-          border: none;
-          border-radius: 8px;
-          padding: 16px;
-          font-size: 16px;
-          font-weight: 600;
-          cursor: pointer;
-          margin-bottom: 12px;
-          transition: background 0.2s;
-        " onmouseover="this.style.background='#059669'" onmouseout="this.style.background='#10b981'">
-          📋 Show Manual Links (Popup-Safe)
-        </button>
+        <div style="margin-bottom: 8px;">
+          <div style="width: 60px; height: 60px; background: rgba(255,255,255,0.2); border-radius: 50%; margin: 0 auto; display: flex; align-items: center; justify-content: center; font-size: 24px;">
+            🛒
+          </div>
+        </div>
+        <h2 style="margin: 0 0 8px; font-size: 24px; font-weight: 600;">Secure Checkout</h2>
+        <p style="margin: 0; opacity: 0.9; font-size: 16px;">
+          ${gumroadItems.length} product${gumroadItems.length > 1 ? 's' : ''} • ${totalItems} item${totalItems > 1 ? 's' : ''} • $${totalPrice.toFixed(2)} total
+        </p>
       </div>
 
-      <div id="manual-links-section" style="display: none; margin-bottom: 24px;">
-        <h4 style="margin: 0 0 16px; color: #333; font-size: 16px;">Click each link to complete your purchases:</h4>
-        ${checkoutUrls.map((item, i) => `
-          <a href="${item.url}" target="_blank" rel="noopener noreferrer" style="
-            display: block;
-            background: #f8f9fa;
-            border: 2px solid #e9ecef;
-            border-radius: 8px;
+      <!-- Content -->
+      <div style="padding: 24px; max-height: 400px; overflow-y: auto;">
+        <!-- Order Summary -->
+        <div style="background: rgba(255,255,255,0.1); border-radius: 12px; padding: 20px; margin-bottom: 24px;">
+          <h3 style="margin: 0 0 16px; font-size: 18px; opacity: 0.9;">📋 Order Summary</h3>
+          ${checkoutUrls.map((item, i) => `
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; ${i < checkoutUrls.length - 1 ? 'border-bottom: 1px solid rgba(255,255,255,0.1);' : ''}">
+              <div>
+                <div style="font-weight: 500; margin-bottom: 4px;">${item.name}</div>
+                <div style="opacity: 0.7; font-size: 14px;">${item.quantity} × $${item.price.toFixed(2)}</div>
+              </div>
+              <div style="font-weight: 600; font-size: 16px;">$${item.total}</div>
+            </div>
+          `).join('')}
+        </div>
+
+        <!-- Checkout Options -->
+        <div style="margin-bottom: 20px;">
+          <h3 style="margin: 0 0 16px; font-size: 18px; opacity: 0.9;">🚀 Choose Your Checkout Method</h3>
+          
+          <button id="quick-checkout" style="
+            width: 100%;
+            background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(10px);
+            color: white;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 12px;
             padding: 16px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
             margin-bottom: 12px;
-            text-decoration: none;
-            color: #333;
             transition: all 0.2s;
-          " onmouseover="this.style.background='#e9ecef'; this.style.borderColor='#6366f1';" onmouseout="this.style.background='#f8f9fa'; this.style.borderColor='#e9ecef';">
-            <div style="font-weight: 600; margin-bottom: 4px;">${i + 1}. ${item.name}</div>
-            <div style="color: #666; font-size: 14px;">${item.quantity} items • $${item.total}</div>
-          </a>
-        `).join('')}
-      </div>
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+          " onmouseover="this.style.background='rgba(255,255,255,0.3)'; this.style.transform='translateY(-2px)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'; this.style.transform='translateY(0)'">
+            ⚡ Quick Checkout (Recommended)
+          </button>
 
-      <button id="close-modal" style="
-        width: 100%;
-        background: #6b7280;
-        color: white;
-        border: none;
-        border-radius: 8px;
-        padding: 12px;
-        font-size: 14px;
-        cursor: pointer;
-        transition: background 0.2s;
-      " onmouseover="this.style.background='#4b5563'" onmouseout="this.style.background='#6b7280'">
-        Close
-      </button>
+          <button id="manual-links" style="
+            width: 100%;
+            background: transparent;
+            color: white;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 12px;
+            padding: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+          " onmouseover="this.style.borderColor='rgba(255,255,255,0.6)'; this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.3)'; this.style.background='transparent'">
+            📋 View Individual Links
+          </button>
+        </div>
+
+        <!-- Manual Links Section (Hidden by default) -->
+        <div id="manual-links-section" style="display: none; margin-bottom: 20px;">
+          <h4 style="margin: 0 0 16px; font-size: 16px; opacity: 0.9;">Complete your purchases:</h4>
+          ${checkoutUrls.map((item, i) => `
+            <a href="${item.url}" target="_blank" rel="noopener noreferrer" style="
+              display: block;
+              background: rgba(255,255,255,0.1);
+              border: 1px solid rgba(255,255,255,0.2);
+              border-radius: 10px;
+              padding: 16px;
+              margin-bottom: 8px;
+              text-decoration: none;
+              color: white;
+              transition: all 0.2s;
+            " onmouseover="this.style.background='rgba(255,255,255,0.2)'; this.style.transform='translateX(4px)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'; this.style.transform='translateX(0)'">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                  <div style="font-weight: 600; margin-bottom: 4px;">${i + 1}. ${item.name}</div>
+                  <div style="opacity: 0.7; font-size: 14px;">${item.quantity} item${item.quantity > 1 ? 's' : ''} • $${item.total}</div>
+                </div>
+                <div style="opacity: 0.7; font-size: 20px;">→</div>
+              </div>
+            </a>
+          `).join('')}
+        </div>
+
+        <!-- Security Badge -->
+        <div style="text-align: center; padding: 16px; background: rgba(255,255,255,0.05); border-radius: 8px; margin-top: 20px;">
+          <div style="opacity: 0.7; font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+            🔒 Secure checkout powered by Gumroad
+          </div>
+        </div>
+      </div>
     `;
 
     checkoutModal.appendChild(modalContent);
     document.body.appendChild(checkoutModal);
 
     // Add event listeners
-    const openAllBtn = modalContent.querySelector('#open-all-tabs');
+    const quickCheckoutBtn = modalContent.querySelector('#quick-checkout');
     const manualLinksBtn = modalContent.querySelector('#manual-links');
     const manualLinksSection = modalContent.querySelector('#manual-links-section');
     const closeBtn = modalContent.querySelector('#close-modal');
 
-    openAllBtn?.addEventListener('click', () => {
-      console.log('[DEBUG] User chose to open all tabs');
+    quickCheckoutBtn?.addEventListener('click', () => {
+      console.log('[DEBUG] User chose quick checkout');
       
       // Helper function to open URL reliably
       const openUrlReliably = (url: string, index: number) => {
@@ -289,7 +322,7 @@ export default function CartPage() {
         }, actualIndex * 800); // 800ms delay between subsequent tabs
       });
 
-      toast.success(`Opening ${gumroadItems.length} checkout pages. Check for popup notifications!`, { duration: 8000 });
+      toast.success(`Opening checkout pages for your ${gumroadItems.length} product${gumroadItems.length > 1 ? 's' : ''}!`, { duration: 6000 });
       document.body.removeChild(checkoutModal);
     });
 
@@ -312,7 +345,7 @@ export default function CartPage() {
       }
     });
 
-    toast.success('Checkout options ready!', { duration: 3000 });
+    toast.success('Ready to checkout!', { duration: 2000 });
   };
 
   if (!isCartLoaded) {
@@ -412,15 +445,8 @@ export default function CartPage() {
               <Button onClick={handleCheckout} size="lg" className="w-full bg-purple-600 hover:bg-purple-700">
                 Checkout on Gumroad
               </Button>
-              <div className="text-xs text-gray-400 mt-2 text-center space-y-1">
-                {cartItems.length > 1 ? (
-                  <>
-                    <p>⚠️ Multiple products will open separate checkout pages due to Gumroad limitations.</p>
-                    <p className="text-yellow-400 font-medium">Complete each purchase to receive all your items.</p>
-                  </>
-                ) : (
-                  <p>This will redirect you to secure Gumroad checkout.</p>
-                )}
+              <div className="text-xs text-gray-400 mt-2 text-center">
+                <p>🔒 Secure checkout powered by Gumroad</p>
               </div>
             </div>
           </div>

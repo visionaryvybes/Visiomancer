@@ -12,6 +12,7 @@ interface ConversionEvent {
     click_id?: string;
     client_ip_address?: string;
     client_user_agent?: string;
+    source_url?: string; // Add source URL for Pinterest requirements
   };
   custom_data: {
     product_ids?: string[];
@@ -19,7 +20,21 @@ interface ConversionEvent {
     currency?: string;
     content_name?: string;
     content_category?: string;
+    product_category?: string; // 2025 EQS requirement
     num_items?: number;
+    order_id?: string; // Add order ID for Pinterest requirements
+    // 2025 EQS Medium Priority Parameters
+    product_price?: number;
+    product_quantity?: number;
+    search_query?: string;
+    product_title?: string;
+    line_items?: Array<{
+      product_id: string;
+      product_name: string;
+      product_price: number;
+      product_quantity: number;
+      product_category?: string;
+    }>;
   };
 }
 
@@ -59,12 +74,12 @@ export async function POST(request: NextRequest) {
     
     event.user_data.client_ip_address = clientIP;
 
-    // Generate external ID from browser fingerprint
+    // Generate external ID from browser fingerprint if not provided by frontend
     if (!event.user_data.external_id) {
       event.user_data.external_id = generateExternalId(request);
     }
 
-    // Extract Pinterest click ID if available
+    // Extract Pinterest click ID if not provided by frontend
     if (!event.user_data.click_id) {
       event.user_data.click_id = extractClickId(request);
     }
@@ -126,6 +141,11 @@ export async function POST(request: NextRequest) {
       customData.content_ids = event.custom_data.product_ids;
     }
 
+    // Add order_id if provided
+    if (event.custom_data.order_id) {
+      customData.order_id = event.custom_data.order_id;
+    }
+
     // Build Pinterest event with all available user data
     const pinterestEvent = {
       event_name: event.event_name,
@@ -137,7 +157,8 @@ export async function POST(request: NextRequest) {
         ...(event.user_data.external_id && { external_id: event.user_data.external_id }),
         ...(event.user_data.click_id && { click_id: event.user_data.click_id }),
         ...(event.user_data.client_ip_address && { client_ip_address: event.user_data.client_ip_address }),
-        ...(event.user_data.client_user_agent && { client_user_agent: event.user_data.client_user_agent })
+        ...(event.user_data.client_user_agent && { client_user_agent: event.user_data.client_user_agent }),
+        ...(event.user_data.source_url && { source_url: event.user_data.source_url })
       },
       custom_data: customData
     };

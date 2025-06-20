@@ -14,6 +14,7 @@ interface ConversionEvent {
     click_id?: string;
     client_ip_address?: string;
     client_user_agent?: string;
+    source_url?: string; // Add source URL for Pinterest requirements
   };
   custom_data: {
     product_ids?: string[];
@@ -21,14 +22,28 @@ interface ConversionEvent {
     currency?: string;
     content_name?: string;
     content_category?: string;
+    product_category?: string; // 2025 EQS requirement
     num_items?: number;
+    order_id?: string; // Add order ID for Pinterest requirements
+    // 2025 EQS Medium Priority Parameters
+    product_price?: number;
+    product_quantity?: number;
+    search_query?: string;
+    product_title?: string;
+    line_items?: Array<{
+      product_id: string;
+      product_name: string;
+      product_price: number;
+      product_quantity: number;
+      product_category?: string;
+    }>;
   };
 }
 
 interface ConversionsContextType {
   trackPageVisit: (productId?: string, productName?: string, category?: string, email?: string) => void;
   trackAddToCart: (productId: string, productName: string, value: number, currency?: string, email?: string) => void;
-  trackCheckout: (productIds: string[], value: number, currency?: string, numItems?: number, email?: string) => void;
+  trackCheckout: (productIds: string[], value: number, currency?: string, numItems?: number, email?: string, orderId?: string) => void;
   getConversions: () => ConversionEvent[];
   clearConversions: () => void;
   setUserEmail: (email: string) => void;
@@ -47,9 +62,36 @@ export const ConversionsProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const getUserData = useCallback(() => {
+    // Extract Pinterest click ID from URL if available
+    let clickId = undefined;
+    let sourceUrl = undefined;
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      clickId = urlParams.get('epik') || urlParams.get('pinterest_click_id') || undefined;
+      // HIGH PRIORITY for EQS 2025: Page URL is required
+      sourceUrl = window.location.href;
+    }
+
+    // Generate external ID from browser data
+    let externalId = undefined;
+    if (typeof window !== 'undefined') {
+      const fingerprint = `${window.navigator.userAgent}-${window.navigator.language}-${window.screen.width}x${window.screen.height}`;
+      // Simple hash function for client-side fingerprinting
+      let hash = 0;
+      for (let i = 0; i < fingerprint.length; i++) {
+        const char = fingerprint.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash; // Convert to 32-bit integer
+      }
+      externalId = Math.abs(hash).toString();
+    }
+
     return {
       client_ip_address: undefined, // Will be set server-side
       client_user_agent: typeof window !== 'undefined' ? window.navigator.userAgent : undefined,
+      external_id: externalId,
+      click_id: clickId,
+      source_url: sourceUrl, // HIGH PRIORITY for 2025 EQS
     };
   }, []);
 
@@ -87,7 +129,10 @@ export const ConversionsProvider = ({ children }: { children: ReactNode }) => {
       custom_data: {
         ...(productId && { product_ids: [productId] }),
         ...(productName && { content_name: productName }),
-        ...(category && { content_category: category }),
+        ...(category && { 
+          content_category: category,
+          product_category: category // 2025 EQS requirement
+        }),
       }
     };
 
@@ -114,7 +159,16 @@ export const ConversionsProvider = ({ children }: { children: ReactNode }) => {
         content_name: productName,
         value: value,
         currency: currency,
-        num_items: 1
+        num_items: 1,
+        // 2025 EQS Medium Priority Parameters
+        product_price: value,
+        product_quantity: 1,
+        line_items: [{
+          product_id: productId,
+          product_name: productName,
+          product_price: value,
+          product_quantity: 1
+        }]
       }
     };
 
@@ -126,7 +180,7 @@ export const ConversionsProvider = ({ children }: { children: ReactNode }) => {
     console.log('[Conversions] Add to Cart tracked:', event);
   }, [generateEventId, getUserData, getUserEmail]);
 
-  const trackCheckout = useCallback((productIds: string[], value: number, currency: string = 'USD', numItems?: number, email?: string) => {
+  const trackCheckout = useCallback((productIds: string[], value: number, currency: string = 'USD', numItems?: number, email?: string, orderId?: string) => {
     const currentEmail = email || getUserEmail();
     
     const event: ConversionEvent = {
@@ -135,12 +189,18 @@ export const ConversionsProvider = ({ children }: { children: ReactNode }) => {
       event_time: Math.floor(Date.now() / 1000),
       event_id: generateEventId(),
       ...(currentEmail && { email: currentEmail }),
-      user_data: getUserData(),
+      user_data: {
+        ...getUserData(),
+        // Add source URL for Pinterest requirements
+        source_url: typeof window !== 'undefined' ? window.location.href : undefined,
+      },
       custom_data: {
         product_ids: productIds,
         value: value,
         currency: currency,
-        num_items: numItems || productIds.length
+        num_items: numItems || productIds.length,
+        // Add order ID for Pinterest requirements
+        ...(orderId && { order_id: orderId })
       }
     };
 

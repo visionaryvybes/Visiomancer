@@ -46,6 +46,49 @@ export default function RootLayout({
         <link rel="icon" href="/logo visiomancer.png" type="image/png" />
         <link rel="apple-touch-icon" href="/logo visiomancer.png" />
         <link rel="shortcut icon" href="/logo visiomancer.png" type="image/png" />
+        
+        {/* Pinterest Tag with Enhanced Match Support (2025 EQS Compliant) */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              !function(e){if(!window.pintrk){window.pintrk = function () {
+              window.pintrk.queue.push(Array.prototype.slice.call(arguments))};var
+                n=window.pintrk;n.queue=[],n.version="3.0";var
+                t=document.createElement("script");t.async=!0,t.src=e;var
+                r=document.getElementsByTagName("script")[0];
+                r.parentNode.insertBefore(t,r)}}("https://s.pinimg.com/ct/core.js");
+              
+              // Enhanced Match initialization with dynamic email and external_id
+              var pinterestLoadConfig = {};
+              
+              // Get email from localStorage if available for Enhanced Match
+              try {
+                var storedEmail = localStorage.getItem('visiomancer_user_email');
+                if (storedEmail) {
+                  pinterestLoadConfig.em = storedEmail; // Pinterest will hash this automatically
+                }
+              } catch(e) {
+                console.log('Pinterest: Could not access stored email');
+              }
+              
+              // Generate external_id for Enhanced Match (EQS requirement)
+              try {
+                var browserData = navigator.userAgent + '-' + navigator.language + '-' + screen.width + 'x' + screen.height;
+                var externalId = '';
+                for (var i = 0; i < browserData.length; i++) {
+                  externalId += browserData.charCodeAt(i).toString(16);
+                }
+                pinterestLoadConfig.external_id = externalId.substring(0, 64); // Pinterest limit
+              } catch(e) {
+                console.log('Pinterest: Could not generate external_id');
+              }
+              
+              pintrk('load', '2614113117297', pinterestLoadConfig);
+              pintrk('page');
+            `
+          }}
+        />
+        
         <style dangerouslySetInnerHTML={{
           __html: `
             * {
