@@ -134,12 +134,13 @@ export default function ConversionsPage() {
         action_source: 'website',
         event_time: Math.floor(Date.now() / 1000),
         event_id: `test_${Date.now()}`,
+        email: 'test@example.com',
         user_data: {
           client_user_agent: navigator.userAgent,
         },
         custom_data: {
           product_ids: ['test_product_id'],
-          content_name: 'Pinterest API Test',
+          content_name: 'Pinterest API Test - Enhanced Tracking',
           content_category: 'test'
         }
       };
@@ -191,7 +192,7 @@ export default function ConversionsPage() {
           {/* Pinterest Configuration Status */}
           <div className="mb-8 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
             <h2 className="text-xl font-bold text-blue-900 dark:text-blue-200 mb-4">
-              Pinterest Configuration
+              Pinterest Configuration - Enhanced Tracking
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div>
@@ -202,6 +203,18 @@ export default function ConversionsPage() {
                 <h3 className="font-medium text-blue-800 dark:text-blue-300">Pinterest Tag</h3>
                 <p className="text-blue-700 dark:text-blue-400">2614113117297</p>
               </div>
+            </div>
+            
+            {/* Customer Information Status */}
+            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 mb-4">
+              <h3 className="font-medium text-green-800 dark:text-green-300 mb-2">✅ Enhanced Customer Information</h3>
+              <ul className="text-sm text-green-700 dark:text-green-400 space-y-1">
+                <li>• Email addresses (hashed for privacy)</li>
+                <li>• External ID (browser fingerprint-based)</li>
+                <li>• Click ID (Pinterest click tracking)</li>
+                <li>• IP address and user agent</li>
+                <li>• Product content IDs for better matching</li>
+              </ul>
             </div>
             <div className="flex gap-4">
               <button

@@ -5,6 +5,7 @@ import { WishlistProvider } from '@/context/WishlistContext';
 import { ConversionsProvider } from '@/context/ConversionsContext';
 import { Toaster } from 'react-hot-toast';
 import { Analytics } from "@vercel/analytics/next";
+import EmailCollectionWrapper from '@/components/ui/EmailCollectionWrapper';
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -63,6 +64,7 @@ export default function RootLayout({
             <ConversionsProvider>
               <CartProvider>
                 {children}
+                <EmailCollectionWrapper />
                 <Toaster position="bottom-right" />
                 <Analytics />
               </CartProvider>

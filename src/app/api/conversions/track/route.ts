@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import crypto from 'crypto';
 
 interface ConversionEvent {
   event_name: 'page_visit' | 'add_to_cart' | 'checkout';
@@ -7,6 +8,8 @@ interface ConversionEvent {
   event_id: string;
   user_data: {
     em?: string[];
+    external_id?: string;
+    click_id?: string;
     client_ip_address?: string;
     client_user_agent?: string;
   };
@@ -20,6 +23,30 @@ interface ConversionEvent {
   };
 }
 
+// Hash email for Pinterest compliance
+function hashEmail(email: string): string {
+  const normalizedEmail = email.trim().toLowerCase();
+  return crypto.createHash('sha256').update(normalizedEmail).digest('hex');
+}
+
+// Generate a consistent external ID based on browser fingerprint
+function generateExternalId(request: NextRequest): string {
+  const userAgent = request.headers.get('user-agent') || '';
+  const acceptLanguage = request.headers.get('accept-language') || '';
+  const fingerprint = `${userAgent}-${acceptLanguage}`;
+  return crypto.createHash('sha256').update(fingerprint).digest('hex').substring(0, 16);
+}
+
+// Extract Pinterest click ID from request
+function extractClickId(request: NextRequest): string | undefined {
+  // Check for Pinterest click ID in URL parameters or headers
+  const url = new URL(request.url);
+  const clickId = url.searchParams.get('epik') || 
+                  url.searchParams.get('pinterest_click_id') ||
+                  request.headers.get('x-pinterest-click-id');
+  return clickId || undefined;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const event: ConversionEvent = await request.json();
@@ -31,6 +58,22 @@ export async function POST(request: NextRequest) {
                     '127.0.0.1';
     
     event.user_data.client_ip_address = clientIP;
+
+    // Generate external ID from browser fingerprint
+    if (!event.user_data.external_id) {
+      event.user_data.external_id = generateExternalId(request);
+    }
+
+    // Extract Pinterest click ID if available
+    if (!event.user_data.click_id) {
+      event.user_data.click_id = extractClickId(request);
+    }
+
+    // If email is provided in the request body, hash it
+    const requestBody = await request.clone().json();
+    if (requestBody.email && typeof requestBody.email === 'string') {
+      event.user_data.em = [hashEmail(requestBody.email)];
+    }
 
     // Pinterest API configuration
     const PINTEREST_ACCESS_TOKEN = process.env.PINTEREST_ACCESS_TOKEN;
@@ -61,7 +104,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Pinterest Conversions API format - minimal required fields only
+    // Pinterest Conversions API format with enhanced user data
     const customData: any = {};
     
     // Only add value and currency if provided
@@ -78,12 +121,24 @@ export async function POST(request: NextRequest) {
       customData.num_items = event.custom_data.num_items;
     }
 
+    // Add content_ids for better product matching
+    if (event.custom_data.product_ids && event.custom_data.product_ids.length > 0) {
+      customData.content_ids = event.custom_data.product_ids;
+    }
+
+    // Build Pinterest event with all available user data
     const pinterestEvent = {
       event_name: event.event_name,
       action_source: event.action_source,
       event_time: event.event_time,
       event_id: event.event_id,
-      user_data: event.user_data,
+      user_data: {
+        ...(event.user_data.em && { em: event.user_data.em }),
+        ...(event.user_data.external_id && { external_id: event.user_data.external_id }),
+        ...(event.user_data.click_id && { click_id: event.user_data.click_id }),
+        ...(event.user_data.client_ip_address && { client_ip_address: event.user_data.client_ip_address }),
+        ...(event.user_data.client_user_agent && { client_user_agent: event.user_data.client_user_agent })
+      },
       custom_data: customData
     };
 
@@ -94,6 +149,9 @@ export async function POST(request: NextRequest) {
     console.log('[Conversions] Sending to Pinterest API:', {
       url: `https://api.pinterest.com/v5/ad_accounts/${PINTEREST_AD_ACCOUNT_ID}/events`,
       event_name: event.event_name,
+      has_email: !!event.user_data.em,
+      has_external_id: !!event.user_data.external_id,
+      has_click_id: !!event.user_data.click_id,
       has_value: !!event.custom_data.value,
       has_currency: !!event.custom_data.currency
     });
@@ -144,7 +202,12 @@ export async function POST(request: NextRequest) {
       success: true, 
       message: 'Event sent to Pinterest successfully',
       pinterestResponse: result,
-      adAccount: 'visionaryvybes (549765875609)'
+      adAccount: 'visionaryvybes (549765875609)',
+      userDataIncluded: {
+        email: !!event.user_data.em,
+        external_id: !!event.user_data.external_id,
+        click_id: !!event.user_data.click_id
+      }
     });
 
   } catch (error) {

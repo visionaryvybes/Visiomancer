@@ -4,6 +4,7 @@ import React from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useCart } from '@/context/CartContext'
+import { useConversions } from '@/context/ConversionsContext'
 import Button from '@/components/ui/Button'
 import { Trash2, Plus, Minus } from 'lucide-react'
 import { CartItem } from '@/types'
@@ -23,17 +24,28 @@ export default function CartPage() {
     getItemCount
   } = useCart();
 
+  const { trackCheckout, getUserEmail } = useConversions();
+
   const handleCheckout = async () => {
     const gumroadItems = getGumroadItems();
+    const userEmail = getUserEmail();
     
     console.log('[DEBUG] Cart checkout - gumroadItems:', gumroadItems);
     console.log('[DEBUG] Cart checkout - gumroadItems.length:', gumroadItems.length);
     console.log('[DEBUG] Cart checkout - cartItems.length:', cartItems.length);
+    console.log('[DEBUG] Cart checkout - userEmail:', userEmail ? 'provided' : 'not provided');
     
     if (gumroadItems.length === 0) {
       toast.error('No items in cart to checkout.');
       return;
     }
+
+    // Track Pinterest conversion event with email if available
+    const productIds = gumroadItems.map(item => item.product.id);
+    const totalValue = gumroadItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
+    const totalItemsCount = gumroadItems.reduce((sum, item) => sum + item.quantity, 0);
+    
+    trackCheckout(productIds, totalValue, 'USD', totalItemsCount, userEmail || undefined);
 
     // If only one item in cart, use direct Gumroad link
     if (gumroadItems.length === 1) {

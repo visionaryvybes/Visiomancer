@@ -80,7 +80,7 @@ export default function ProductDetailClient({ product: initialProduct, fetcherEr
   const { addItem } = useCart()
   const { products: allProducts, getProductById: getProductFromContext } = useProducts()
   const { wishlist, toggleWishlist, isInWishlist } = useWishlist()
-  const { trackCheckout } = useConversions()
+  const { trackCheckout, getUserEmail } = useConversions()
   
   console.log("[ProductDetailClient] allProducts from context:", allProducts);
   // --- End Logging ---
@@ -334,8 +334,9 @@ export default function ProductDetailClient({ product: initialProduct, fetcherEr
     
     toast.loading('Redirecting to checkout...', { id: 'buy-now' });
     
-    // Track conversion event for direct purchase
-    trackCheckout([product.id], product.price, 'USD', 1);
+    // Track conversion event for direct purchase with email if available
+    const userEmail = getUserEmail();
+    trackCheckout([product.id], product.price, 'USD', 1, userEmail || undefined);
     
     // Build URL with quantity parameter
     let purchaseUrl = product.gumroadUrl;

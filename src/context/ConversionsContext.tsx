@@ -1,14 +1,17 @@
 'use client';
 
-import React, { createContext, useContext, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useCallback, ReactNode, useState } from 'react';
 
 interface ConversionEvent {
   event_name: 'page_visit' | 'add_to_cart' | 'checkout';
   action_source: 'website';
   event_time: number;
   event_id: string;
+  email?: string; // Add email to the event data
   user_data: {
     em?: string[]; // hashed emails
+    external_id?: string;
+    click_id?: string;
     client_ip_address?: string;
     client_user_agent?: string;
   };
@@ -23,11 +26,13 @@ interface ConversionEvent {
 }
 
 interface ConversionsContextType {
-  trackPageVisit: (productId?: string, productName?: string, category?: string) => void;
-  trackAddToCart: (productId: string, productName: string, value: number, currency?: string) => void;
-  trackCheckout: (productIds: string[], value: number, currency?: string, numItems?: number) => void;
+  trackPageVisit: (productId?: string, productName?: string, category?: string, email?: string) => void;
+  trackAddToCart: (productId: string, productName: string, value: number, currency?: string, email?: string) => void;
+  trackCheckout: (productIds: string[], value: number, currency?: string, numItems?: number, email?: string) => void;
   getConversions: () => ConversionEvent[];
   clearConversions: () => void;
+  setUserEmail: (email: string) => void;
+  getUserEmail: () => string | null;
 }
 
 const ConversionsContext = createContext<ConversionsContextType | undefined>(undefined);
@@ -35,6 +40,7 @@ const ConversionsContext = createContext<ConversionsContextType | undefined>(und
 export const ConversionsProvider = ({ children }: { children: ReactNode }) => {
   // Store conversions in memory for this session
   const conversions: ConversionEvent[] = [];
+  const [userEmail, setUserEmailState] = useState<string | null>(null);
 
   const generateEventId = useCallback(() => {
     return `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -47,12 +53,36 @@ export const ConversionsProvider = ({ children }: { children: ReactNode }) => {
     };
   }, []);
 
-  const trackPageVisit = useCallback((productId?: string, productName?: string, category?: string) => {
+  const setUserEmail = useCallback((email: string) => {
+    setUserEmailState(email);
+    // Store in localStorage for persistence
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('visiomancer_user_email', email);
+    }
+  }, []);
+
+  const getUserEmail = useCallback(() => {
+    if (userEmail) return userEmail;
+    // Try to get from localStorage
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('visiomancer_user_email');
+      if (stored) {
+        setUserEmailState(stored);
+        return stored;
+      }
+    }
+    return null;
+  }, [userEmail]);
+
+  const trackPageVisit = useCallback((productId?: string, productName?: string, category?: string, email?: string) => {
+    const currentEmail = email || getUserEmail();
+    
     const event: ConversionEvent = {
       event_name: 'page_visit',
       action_source: 'website',
       event_time: Math.floor(Date.now() / 1000),
       event_id: generateEventId(),
+      ...(currentEmail && { email: currentEmail }),
       user_data: getUserData(),
       custom_data: {
         ...(productId && { product_ids: [productId] }),
@@ -67,14 +97,17 @@ export const ConversionsProvider = ({ children }: { children: ReactNode }) => {
     sendConversionEvent(event);
     
     console.log('[Conversions] Page Visit tracked:', event);
-  }, [generateEventId, getUserData]);
+  }, [generateEventId, getUserData, getUserEmail]);
 
-  const trackAddToCart = useCallback((productId: string, productName: string, value: number, currency: string = 'USD') => {
+  const trackAddToCart = useCallback((productId: string, productName: string, value: number, currency: string = 'USD', email?: string) => {
+    const currentEmail = email || getUserEmail();
+    
     const event: ConversionEvent = {
       event_name: 'add_to_cart',
       action_source: 'website',
       event_time: Math.floor(Date.now() / 1000),
       event_id: generateEventId(),
+      ...(currentEmail && { email: currentEmail }),
       user_data: getUserData(),
       custom_data: {
         product_ids: [productId],
@@ -91,14 +124,17 @@ export const ConversionsProvider = ({ children }: { children: ReactNode }) => {
     sendConversionEvent(event);
     
     console.log('[Conversions] Add to Cart tracked:', event);
-  }, [generateEventId, getUserData]);
+  }, [generateEventId, getUserData, getUserEmail]);
 
-  const trackCheckout = useCallback((productIds: string[], value: number, currency: string = 'USD', numItems?: number) => {
+  const trackCheckout = useCallback((productIds: string[], value: number, currency: string = 'USD', numItems?: number, email?: string) => {
+    const currentEmail = email || getUserEmail();
+    
     const event: ConversionEvent = {
       event_name: 'checkout',
       action_source: 'website',
       event_time: Math.floor(Date.now() / 1000),
       event_id: generateEventId(),
+      ...(currentEmail && { email: currentEmail }),
       user_data: getUserData(),
       custom_data: {
         product_ids: productIds,
@@ -114,7 +150,7 @@ export const ConversionsProvider = ({ children }: { children: ReactNode }) => {
     sendConversionEvent(event);
     
     console.log('[Conversions] Checkout tracked:', event);
-  }, [generateEventId, getUserData]);
+  }, [generateEventId, getUserData, getUserEmail]);
 
   const sendConversionEvent = useCallback(async (event: ConversionEvent) => {
     try {
@@ -128,6 +164,9 @@ export const ConversionsProvider = ({ children }: { children: ReactNode }) => {
 
       if (!response.ok) {
         console.error('[Conversions] Failed to send event:', response.statusText);
+      } else {
+        const result = await response.json();
+        console.log('[Conversions] Event sent successfully:', result);
       }
     } catch (error) {
       console.error('[Conversions] Error sending event:', error);
@@ -148,14 +187,16 @@ export const ConversionsProvider = ({ children }: { children: ReactNode }) => {
       trackAddToCart,
       trackCheckout,
       getConversions,
-      clearConversions
+      clearConversions,
+      setUserEmail,
+      getUserEmail
     }}>
       {children}
     </ConversionsContext.Provider>
   );
 };
 
-export const useConversions = (): ConversionsContextType => {
+export const useConversions = () => {
   const context = useContext(ConversionsContext);
   if (context === undefined) {
     throw new Error('useConversions must be used within a ConversionsProvider');
