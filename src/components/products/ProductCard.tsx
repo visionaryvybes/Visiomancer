@@ -62,7 +62,7 @@ export default function ProductCard({
   const { toggleWishlist, isInWishlist } = useWishlist();
   const { addItem } = useCart();
   const { getProductById: getProductFromContext } = useProducts();
-  const { trackAddToCart } = useConversions();
+  const { trackAddToCart, getUserEmail } = useConversions();
   const [isAdding, setIsAdding] = useState(false);
 
   // Check if product is in wishlist using context
@@ -82,11 +82,16 @@ export default function ProductCard({
       console.log('[ProductCard] Found product in context:', productFromContext);
       addItem(productFromContext, 1);
       
-      // Track conversion event
+      // Get user email for tracking
+      const userEmail = getUserEmail();
+      
+      // Track conversion event with email
       trackAddToCart(
         productFromContext.id,
         productFromContext.name,
-        productFromContext.price
+        productFromContext.price,
+        'USD',
+        userEmail || undefined
       );
       
       // CartContext shows its own toast

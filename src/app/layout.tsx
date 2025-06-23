@@ -6,6 +6,7 @@ import { ConversionsProvider } from '@/context/ConversionsContext';
 import { Toaster } from 'react-hot-toast';
 import { Analytics } from "@vercel/analytics/next";
 import EmailCollectionWrapper from '@/components/ui/EmailCollectionWrapper';
+import PinterestTrackingDebugger from '@/components/ui/PinterestTrackingDebugger';
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -71,20 +72,50 @@ export default function RootLayout({
                 console.log('Pinterest: Could not access stored email');
               }
               
-              // Generate external_id for Enhanced Match (EQS requirement)
+              // Get external_id from localStorage or generate it (same logic as ConversionsContext)
               try {
-                var browserData = navigator.userAgent + '-' + navigator.language + '-' + screen.width + 'x' + screen.height;
-                var externalId = '';
-                for (var i = 0; i < browserData.length; i++) {
-                  externalId += browserData.charCodeAt(i).toString(16);
+                var externalId = localStorage.getItem('visiomancer_external_id');
+                if (!externalId) {
+                  // Generate consistent external_id based on browser fingerprint
+                  var fingerprint = navigator.userAgent + '-' + navigator.language + '-' + 
+                                   screen.width + 'x' + screen.height + '-' + 
+                                   (navigator.hardwareConcurrency || '');
+                  var hash = 0;
+                  for (var i = 0; i < fingerprint.length; i++) {
+                    var char = fingerprint.charCodeAt(i);
+                    hash = ((hash << 5) - hash) + char;
+                    hash = hash & hash;
+                  }
+                  externalId = Math.abs(hash).toString();
+                  localStorage.setItem('visiomancer_external_id', externalId);
                 }
-                pinterestLoadConfig.external_id = externalId.substring(0, 64); // Pinterest limit
+                pinterestLoadConfig.external_id = externalId;
               } catch(e) {
                 console.log('Pinterest: Could not generate external_id');
               }
               
+              // Extract click ID from URL parameters
+              try {
+                var urlParams = new URLSearchParams(window.location.search);
+                var clickId = urlParams.get('epik') || 
+                             urlParams.get('pinterest_click_id') || 
+                             urlParams.get('_epik') ||
+                             urlParams.get('click_id');
+                if (clickId) {
+                  pinterestLoadConfig.click_id = clickId;
+                }
+              } catch(e) {
+                console.log('Pinterest: Could not extract click_id');
+              }
+              
               pintrk('load', '2614113117297', pinterestLoadConfig);
               pintrk('page');
+              
+              // Also send page event with enhanced data
+              pintrk('track', 'pagevisit', {
+                page_url: window.location.href,
+                page_title: document.title
+              });
             `
           }}
         />
@@ -110,6 +141,7 @@ export default function RootLayout({
                 <EmailCollectionWrapper />
                 <Toaster position="bottom-right" />
                 <Analytics />
+                {process.env.NODE_ENV === 'development' && <PinterestTrackingDebugger />}
               </CartProvider>
             </ConversionsProvider>
           </WishlistProvider>

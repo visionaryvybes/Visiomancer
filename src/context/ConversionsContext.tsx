@@ -67,23 +67,37 @@ export const ConversionsProvider = ({ children }: { children: ReactNode }) => {
     let sourceUrl = undefined;
     if (typeof window !== 'undefined') {
       const urlParams = new URLSearchParams(window.location.search);
-      clickId = urlParams.get('epik') || urlParams.get('pinterest_click_id') || undefined;
-      // HIGH PRIORITY for EQS 2025: Page URL is required
+      // Check for various Pinterest click ID parameters
+      clickId = urlParams.get('epik') || 
+                urlParams.get('pinterest_click_id') || 
+                urlParams.get('_epik') ||
+                urlParams.get('click_id') ||
+                undefined;
+      
+      // HIGH PRIORITY for EQS 2025: Page URL is required for ALL events
       sourceUrl = window.location.href;
     }
 
-    // Generate external ID from browser data
+    // Generate external ID from browser data - make it more consistent
     let externalId = undefined;
     if (typeof window !== 'undefined') {
-      const fingerprint = `${window.navigator.userAgent}-${window.navigator.language}-${window.screen.width}x${window.screen.height}`;
-      // Simple hash function for client-side fingerprinting
-      let hash = 0;
-      for (let i = 0; i < fingerprint.length; i++) {
-        const char = fingerprint.charCodeAt(i);
-        hash = ((hash << 5) - hash) + char;
-        hash = hash & hash; // Convert to 32-bit integer
+      // Try to get from localStorage first for consistency
+      let stored = localStorage.getItem('visiomancer_external_id');
+      if (!stored) {
+        // Generate a new one based on browser fingerprint
+        const fingerprint = `${window.navigator.userAgent}-${window.navigator.language}-${window.screen.width}x${window.screen.height}-${window.navigator.hardwareConcurrency || ''}`;
+        // Simple hash function for client-side fingerprinting
+        let hash = 0;
+        for (let i = 0; i < fingerprint.length; i++) {
+          const char = fingerprint.charCodeAt(i);
+          hash = ((hash << 5) - hash) + char;
+          hash = hash & hash; // Convert to 32-bit integer
+        }
+        stored = Math.abs(hash).toString();
+        // Store for consistency across events
+        localStorage.setItem('visiomancer_external_id', stored);
       }
-      externalId = Math.abs(hash).toString();
+      externalId = stored;
     }
 
     return {
@@ -91,7 +105,7 @@ export const ConversionsProvider = ({ children }: { children: ReactNode }) => {
       client_user_agent: typeof window !== 'undefined' ? window.navigator.userAgent : undefined,
       external_id: externalId,
       click_id: clickId,
-      source_url: sourceUrl, // HIGH PRIORITY for 2025 EQS
+      source_url: sourceUrl, // HIGH PRIORITY for 2025 EQS - included for ALL events
     };
   }, []);
 
@@ -118,14 +132,15 @@ export const ConversionsProvider = ({ children }: { children: ReactNode }) => {
 
   const trackPageVisit = useCallback((productId?: string, productName?: string, category?: string, email?: string) => {
     const currentEmail = email || getUserEmail();
+    const userData = getUserData();
     
     const event: ConversionEvent = {
       event_name: 'page_visit',
       action_source: 'website',
       event_time: Math.floor(Date.now() / 1000),
       event_id: generateEventId(),
-      ...(currentEmail && { email: currentEmail }),
-      user_data: getUserData(),
+      ...(currentEmail && { email: currentEmail }), // Include raw email for server-side hashing
+      user_data: userData, // All user data including source_url
       custom_data: {
         ...(productId && { product_ids: [productId] }),
         ...(productName && { content_name: productName }),
@@ -146,14 +161,15 @@ export const ConversionsProvider = ({ children }: { children: ReactNode }) => {
 
   const trackAddToCart = useCallback((productId: string, productName: string, value: number, currency: string = 'USD', email?: string) => {
     const currentEmail = email || getUserEmail();
+    const userData = getUserData();
     
     const event: ConversionEvent = {
       event_name: 'add_to_cart',
       action_source: 'website',
       event_time: Math.floor(Date.now() / 1000),
       event_id: generateEventId(),
-      ...(currentEmail && { email: currentEmail }),
-      user_data: getUserData(),
+      ...(currentEmail && { email: currentEmail }), // Include raw email for server-side hashing
+      user_data: userData, // All user data including source_url
       custom_data: {
         product_ids: [productId],
         content_name: productName,
@@ -182,25 +198,24 @@ export const ConversionsProvider = ({ children }: { children: ReactNode }) => {
 
   const trackCheckout = useCallback((productIds: string[], value: number, currency: string = 'USD', numItems?: number, email?: string, orderId?: string) => {
     const currentEmail = email || getUserEmail();
+    const userData = getUserData();
+    
+    // Generate order ID if not provided
+    const finalOrderId = orderId || `order_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     
     const event: ConversionEvent = {
       event_name: 'checkout',
       action_source: 'website',
       event_time: Math.floor(Date.now() / 1000),
       event_id: generateEventId(),
-      ...(currentEmail && { email: currentEmail }),
-      user_data: {
-        ...getUserData(),
-        // Add source URL for Pinterest requirements
-        source_url: typeof window !== 'undefined' ? window.location.href : undefined,
-      },
+      ...(currentEmail && { email: currentEmail }), // Include raw email for server-side hashing
+      user_data: userData, // All user data including source_url
       custom_data: {
         product_ids: productIds,
         value: value,
         currency: currency,
         num_items: numItems || productIds.length,
-        // Add order ID for Pinterest requirements
-        ...(orderId && { order_id: orderId })
+        order_id: finalOrderId // Always include order ID for checkout events
       }
     };
 
