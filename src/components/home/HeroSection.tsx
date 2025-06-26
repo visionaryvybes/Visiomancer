@@ -6,7 +6,6 @@ import { ArrowRight } from "lucide-react";
 import { Product } from "@/types";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import Image from "next/image";
 
 interface HeroSectionProps {
   featuredProduct?: Product;
@@ -15,6 +14,7 @@ interface HeroSectionProps {
 export default function HeroSection({ featuredProduct }: HeroSectionProps) {
   const [isVisible, setIsVisible] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [videoError, setVideoError] = useState(false);
   
   useEffect(() => {
     setIsVisible(true);
@@ -25,16 +25,19 @@ export default function HeroSection({ featuredProduct }: HeroSectionProps) {
       {/* Large hero banner - Fully responsive and centered */}
       <section className="w-full relative overflow-hidden rounded-lg mb-8 sm:mb-12">
         <div className="w-full h-[300px] sm:h-[400px] md:h-[450px] lg:h-[500px] relative rounded-lg overflow-hidden">
-          {!imageError ? (
+          {!videoError ? (
             <>
-              <Image
-                src="/images/banner.jpg"
-                alt="Visiomancer Banner - Aesthetics, Wallpapers, Posters and Art"
-                fill
-                className="object-cover"
-                priority
-                onError={() => setImageError(true)}
-              />
+              <video
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="absolute inset-0 w-full h-full object-cover"
+                onError={() => setVideoError(true)}
+              >
+                <source src="/cellular automata.mp4" type="video/mp4" />
+                Your browser does not support the video tag.
+              </video>
               {/* Dark overlay for better text readability */}
               <div className="absolute inset-0 bg-black/40"></div>
             </>
@@ -49,7 +52,7 @@ export default function HeroSection({ featuredProduct }: HeroSectionProps) {
                 <div className="absolute bottom-1/4 right-1/4 w-24 h-24 sm:w-48 sm:h-48 bg-white/5 rounded-full blur-3xl"></div>
               </div>
               <div className="absolute bottom-2 right-2 sm:bottom-4 sm:right-4 bg-black/50 text-white text-xs p-2 rounded font-base">
-                Add banner.jpg to /public/images/
+                Video failed to load
               </div>
             </>
           )}
