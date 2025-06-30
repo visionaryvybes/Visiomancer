@@ -6,6 +6,7 @@ interface ConversionEvent {
   action_source: 'website';
   event_time: number;
   event_id: string;
+  email?: string; // Raw email from client
   user_data: {
     em?: string[];
     external_id?: string;
@@ -66,6 +67,16 @@ export async function POST(request: NextRequest) {
   try {
     const event: ConversionEvent = await request.json();
     
+    // Log incoming event data for debugging
+    console.log('[Conversions] Incoming event:', {
+      event_name: event.event_name,
+      has_email: !!event.email,
+      has_external_id: !!event.user_data?.external_id,
+      has_click_id: !!event.user_data?.click_id,
+      external_id: event.user_data?.external_id,
+      click_id: event.user_data?.click_id
+    });
+    
     // Add client IP address from request
     const clientIP = request.ip || 
                     request.headers.get('x-forwarded-for')?.split(',')[0] ||
@@ -74,20 +85,25 @@ export async function POST(request: NextRequest) {
     
     event.user_data.client_ip_address = clientIP;
 
-    // Generate external ID from browser fingerprint if not provided by frontend
+    // Only use external ID if provided by client (Pinterest is picky about format)
     if (!event.user_data.external_id) {
-      event.user_data.external_id = generateExternalId(request);
+      console.log('[Conversions] No external ID provided by client - proceeding without server-side generation');
+      // Pinterest validation is strict, so only use client-provided external_id
     }
 
-    // Extract Pinterest click ID if not provided by frontend
+    // Click ID should be extracted on client side from URL params
+    // Server can't access the original page URL params
     if (!event.user_data.click_id) {
-      event.user_data.click_id = extractClickId(request);
+      console.log('[Conversions] Click ID not provided by client');
+      // Don't try to extract from API request - it won't have the original page params
     }
 
-    // If email is provided in the request body, hash it
-    const requestBody = await request.clone().json();
-    if (requestBody.email && typeof requestBody.email === 'string') {
-      event.user_data.em = [hashEmail(requestBody.email)];
+    // Hash email if provided
+    if (event.email && typeof event.email === 'string') {
+      event.user_data.em = [hashEmail(event.email)];
+      console.log('[Conversions] Email hashed successfully');
+    } else {
+      console.log('[Conversions] No email provided in event');
     }
 
     // Pinterest API configuration
@@ -146,20 +162,48 @@ export async function POST(request: NextRequest) {
       customData.order_id = event.custom_data.order_id;
     }
 
-    // Build Pinterest event with all available user data
+    // Build Pinterest event with correct user_data structure
+    // Pinterest has very specific field names - following their exact API specification
+    const userData: any = {};
+    
+    // Pinterest expects 'em' as an array of hashed emails
+    if (event.user_data.em && event.user_data.em.length > 0) {
+      userData.em = event.user_data.em;
+    }
+    
+    // External ID for Pinterest
+    // Pinterest requires external_id to be an array of hashed values for privacy
+    if (event.user_data.external_id) {
+      // Pinterest expects external_id as an array of hashed strings
+      userData.external_id = [event.user_data.external_id];
+      console.log('[Conversions] Including external_id for Pinterest (as array):', [event.user_data.external_id]);
+    }
+    
+    // Pinterest expects 'click_id' for attribution
+    if (event.user_data.click_id) {
+      userData.click_id = event.user_data.click_id;
+    }
+    
+    // Client IP is supported
+    if (event.user_data.client_ip_address) {
+      userData.client_ip_address = event.user_data.client_ip_address;
+    }
+    
+    // Client User Agent is supported
+    if (event.user_data.client_user_agent) {
+      userData.client_user_agent = event.user_data.client_user_agent;
+    }
+
+    // Pinterest requires source URL in event_source_url field (not in user_data)
+    const eventSourceUrl = event.user_data.source_url;
+
     const pinterestEvent = {
       event_name: event.event_name,
       action_source: event.action_source,
       event_time: event.event_time,
       event_id: event.event_id,
-      user_data: {
-        ...(event.user_data.em && { em: event.user_data.em }),
-        ...(event.user_data.external_id && { external_id: event.user_data.external_id }),
-        ...(event.user_data.click_id && { click_id: event.user_data.click_id }),
-        ...(event.user_data.client_ip_address && { client_ip_address: event.user_data.client_ip_address }),
-        ...(event.user_data.client_user_agent && { client_user_agent: event.user_data.client_user_agent }),
-        ...(event.user_data.source_url && { source_url: event.user_data.source_url })
-      },
+      event_source_url: eventSourceUrl, // Pinterest expects this at the top level
+      user_data: userData,
       custom_data: customData
     };
 
@@ -170,14 +214,19 @@ export async function POST(request: NextRequest) {
     console.log('[Conversions] Sending to Pinterest API:', {
       url: `https://api.pinterest.com/v5/ad_accounts/${PINTEREST_AD_ACCOUNT_ID}/events`,
       event_name: event.event_name,
-      has_email: !!event.user_data.em,
-      has_external_id: !!event.user_data.external_id,
-      has_click_id: !!event.user_data.click_id,
-      has_value: !!event.custom_data.value,
-      has_currency: !!event.custom_data.currency
+      has_email: !!userData.em,
+      has_external_id: !!userData.external_id,
+      has_click_id: !!userData.click_id,
+      has_value: !!customData.value,
+      has_currency: !!customData.currency,
+      user_data_sent: userData,
+      custom_data_sent: customData,
+      full_payload: pinterestPayload
     });
 
     // Send to Pinterest Conversions API
+    // Updated endpoint: https://api.pinterest.com/v5/ad_accounts/549765875609/events
+    // For ad account: visionaryvybes (549765875609)
     const pinterestResponse = await fetch(
       `https://api.pinterest.com/v5/ad_accounts/${PINTEREST_AD_ACCOUNT_ID}/events`,
       {
@@ -225,9 +274,10 @@ export async function POST(request: NextRequest) {
       pinterestResponse: result,
       adAccount: 'visionaryvybes (549765875609)',
       userDataIncluded: {
-        email: !!event.user_data.em,
-        external_id: !!event.user_data.external_id,
-        click_id: !!event.user_data.click_id
+        email: !!userData.em,
+        external_id: !!userData.external_id,
+        click_id: !!userData.click_id,
+
       }
     });
 

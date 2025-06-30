@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useCallback, ReactNode, useState } from 'react';
+import React, { createContext, useContext, useCallback, ReactNode, useState, useEffect } from 'react';
 
 interface ConversionEvent {
   event_name: 'page_visit' | 'add_to_cart' | 'checkout';
@@ -56,6 +56,44 @@ export const ConversionsProvider = ({ children }: { children: ReactNode }) => {
   // Store conversions in memory for this session
   const conversions: ConversionEvent[] = [];
   const [userEmail, setUserEmailState] = useState<string | null>(null);
+  
+  // Initialize user data on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      // Initialize external ID if not exists
+      let externalId = localStorage.getItem('visiomancer_external_id');
+      if (!externalId) {
+        const fingerprint = `${window.navigator.userAgent}-${window.navigator.language}-${window.screen.width}x${window.screen.height}-${window.navigator.hardwareConcurrency || ''}`;
+        let hash = 0;
+        for (let i = 0; i < fingerprint.length; i++) {
+          const char = fingerprint.charCodeAt(i);
+          hash = ((hash << 5) - hash) + char;
+          hash = hash & hash;
+        }
+        externalId = Math.abs(hash).toString();
+        localStorage.setItem('visiomancer_external_id', externalId);
+        console.log('[Conversions] Generated and stored external_id:', externalId);
+      }
+      
+      // Initialize email if exists
+      const storedEmail = localStorage.getItem('visiomancer_user_email');
+      if (storedEmail) {
+        setUserEmailState(storedEmail);
+        console.log('[Conversions] Loaded stored email');
+      }
+      
+      // Store click ID if present in URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const clickId = urlParams.get('epik') || 
+                      urlParams.get('pinterest_click_id') || 
+                      urlParams.get('_epik') ||
+                      urlParams.get('click_id');
+      if (clickId) {
+        sessionStorage.setItem('visiomancer_click_id', clickId);
+        console.log('[Conversions] Click ID found in URL and stored:', clickId);
+      }
+    }
+  }, []);
 
   const generateEventId = useCallback(() => {
     return `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -66,13 +104,25 @@ export const ConversionsProvider = ({ children }: { children: ReactNode }) => {
     let clickId = undefined;
     let sourceUrl = undefined;
     if (typeof window !== 'undefined') {
-      const urlParams = new URLSearchParams(window.location.search);
-      // Check for various Pinterest click ID parameters
-      clickId = urlParams.get('epik') || 
-                urlParams.get('pinterest_click_id') || 
-                urlParams.get('_epik') ||
-                urlParams.get('click_id') ||
-                undefined;
+      // First check if we have a stored click ID from this session
+      clickId = sessionStorage.getItem('visiomancer_click_id') || undefined;
+      
+      // If not, check URL parameters
+      if (!clickId) {
+        const urlParams = new URLSearchParams(window.location.search);
+        // Check for various Pinterest click ID parameters
+        clickId = urlParams.get('epik') || 
+                  urlParams.get('pinterest_click_id') || 
+                  urlParams.get('_epik') ||
+                  urlParams.get('click_id') ||
+                  undefined;
+        
+        // Store click ID for this session if found
+        if (clickId) {
+          sessionStorage.setItem('visiomancer_click_id', clickId);
+          console.log('[Conversions] Stored click_id for session:', clickId);
+        }
+      }
       
       // HIGH PRIORITY for EQS 2025: Page URL is required for ALL events
       sourceUrl = window.location.href;
@@ -101,6 +151,7 @@ export const ConversionsProvider = ({ children }: { children: ReactNode }) => {
     }
 
     return {
+      em: undefined as string[] | undefined, // Add em field to return type
       client_ip_address: undefined, // Will be set server-side
       client_user_agent: typeof window !== 'undefined' ? window.navigator.userAgent : undefined,
       external_id: externalId,
@@ -134,6 +185,11 @@ export const ConversionsProvider = ({ children }: { children: ReactNode }) => {
     const currentEmail = email || getUserEmail();
     const userData = getUserData();
     
+    // Always include email in user_data if available
+    if (currentEmail) {
+      userData.em = [currentEmail]; // Will be hashed server-side
+    }
+    
     const event: ConversionEvent = {
       event_name: 'page_visit',
       action_source: 'website',
@@ -162,6 +218,11 @@ export const ConversionsProvider = ({ children }: { children: ReactNode }) => {
   const trackAddToCart = useCallback((productId: string, productName: string, value: number, currency: string = 'USD', email?: string) => {
     const currentEmail = email || getUserEmail();
     const userData = getUserData();
+    
+    // Always include email in user_data if available
+    if (currentEmail) {
+      userData.em = [currentEmail]; // Will be hashed server-side
+    }
     
     const event: ConversionEvent = {
       event_name: 'add_to_cart',
@@ -199,6 +260,11 @@ export const ConversionsProvider = ({ children }: { children: ReactNode }) => {
   const trackCheckout = useCallback((productIds: string[], value: number, currency: string = 'USD', numItems?: number, email?: string, orderId?: string) => {
     const currentEmail = email || getUserEmail();
     const userData = getUserData();
+    
+    // Always include email in user_data if available
+    if (currentEmail) {
+      userData.em = [currentEmail]; // Will be hashed server-side
+    }
     
     // Generate order ID if not provided
     const finalOrderId = orderId || `order_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;

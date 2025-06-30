@@ -29,8 +29,10 @@ import {
   Clock,
   Award
 } from 'lucide-react'
-import ProductCard, { ProductCardProps } from '@/components/products/ProductCard'
+import ProductCard from '@/components/products/ProductCard'
 import { motion, AnimatePresence } from 'framer-motion'
+import { FiShare } from 'react-icons/fi' // Modern share icon
+import ProductReviews from '@/components/products/ProductReviews'
 
 // Use the SerializableError type for the prop
 interface SerializableError {
@@ -311,6 +313,27 @@ export default function ProductDetailClient({ product: initialProduct, fetcherEr
       return;
     }
     
+    // Build proper Gumroad checkout URL
+    const buildGumroadCheckoutUrl = (gumroadUrl: string, quantity: number): string => {
+      try {
+        const url = new URL(gumroadUrl);
+        
+        // Ensure we have the wanted=true parameter for direct checkout
+        url.searchParams.set('wanted', 'true');
+        
+        // Add quantity parameter
+        url.searchParams.set('quantity', quantity.toString());
+        
+        return url.toString();
+      } catch (error) {
+        console.error('Error constructing Gumroad URL:', error);
+        // Fallback to simple concatenation
+        const hasParams = gumroadUrl.includes('?');
+        const connector = hasParams ? '&' : '?';
+        return `${gumroadUrl}${connector}wanted=true&quantity=${quantity}`;
+      }
+    };
+    
     toast.loading('Redirecting to checkout...', { id: 'buy-now' });
     
     // Track conversion event for direct purchase with email if available
@@ -318,13 +341,13 @@ export default function ProductDetailClient({ product: initialProduct, fetcherEr
     const orderId = `order_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     trackCheckout([product.id], product.price, 'USD', 1, userEmail || undefined, orderId);
     
-    // Build URL with quantity parameter
-    let purchaseUrl = product.gumroadUrl;
-    const baseUrl = purchaseUrl.replace('?wanted=true', '');
-    purchaseUrl = `${baseUrl}?quantity=1&wanted=true`;
+    // Build URL with proper parameters
+    const finalUrl = buildGumroadCheckoutUrl(product.gumroadUrl, 1);
+    
+    console.log('[Buy Now] Opening URL:', finalUrl);
     
     // Open Gumroad checkout directly
-    window.open(purchaseUrl, '_blank');
+    window.open(finalUrl, '_blank');
     toast.success('Redirecting to Gumroad checkout...', { id: 'buy-now' });
   };
 
@@ -1005,20 +1028,6 @@ export default function ProductDetailClient({ product: initialProduct, fetcherEr
           <h2 className="text-2xl font-bold mb-6 text-gray-800 dark:text-gray-100">You Might Also Like</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {relatedProducts.map((relatedProduct, index) => {
-              // Map Product data to ProductCardProps
-              const cardProps: ProductCardProps = {
-                id: relatedProduct.id,
-                title: relatedProduct.name, 
-                slug: relatedProduct.id, // Assuming id can be used as slug
-                imageUrl: relatedProduct.images?.[0]?.url || '/next.svg', // Use first image or placeholder
-                imageAlt: relatedProduct.name || 'Product image', // Use name for alt text
-                price: { min: relatedProduct.price }, // Adapt price structure
-                vendor: { 
-                  name: relatedProduct.source, // Use source as vendor name 
-                  type: relatedProduct.source.toUpperCase() // Convert source to uppercase type
-                },
-                isDigital: relatedProduct.source === 'gumroad' // Example logic
-              };
               return (
                 <motion.div
                   key={relatedProduct.id}
@@ -1027,7 +1036,7 @@ export default function ProductDetailClient({ product: initialProduct, fetcherEr
                   animate="visible"
                   transition={{ delay: 0.1 * index }}
                 >
-                  <ProductCard {...cardProps} />
+                  <ProductCard product={relatedProduct} />
                 </motion.div>
               );
             })}

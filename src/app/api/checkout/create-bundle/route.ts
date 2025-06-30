@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { CartItem } from '@/types';
+import { buildGumroadCheckoutUrl } from '@/lib/gumroad-utils';
 
 /**
  * Creates a checkout summary for multiple items since Gumroad doesn't support true bundle checkout.
@@ -40,9 +41,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No checkout URL available' }, { status: 400 });
     }
 
-    const hasParams = firstItemUrl.includes('?');
-    const connector = hasParams ? '&' : '?';
-    const checkoutUrl = `${firstItemUrl}${connector}quantity=${firstItem.quantity}`;
+    const checkoutUrl = buildGumroadCheckoutUrl(firstItemUrl, firstItem.quantity);
 
     return NextResponse.json({ 
       checkoutUrl,

@@ -141,7 +141,11 @@ export default function RootLayout({
                 <EmailCollectionWrapper />
                 <Toaster position="bottom-right" />
                 <Analytics />
-                {process.env.NODE_ENV === 'development' && <PinterestTrackingDebugger />}
+                {/* Pinterest Tracking Debugger - Temporarily disabled */}
+                {/* {process.env.NODE_ENV === 'development' && 
+                 typeof window !== 'undefined' && 
+                 (window.location.search.includes('debug=pinterest') || localStorage.getItem('pinterest_debug') === 'true') && 
+                 <PinterestTrackingDebugger />} */}
               </CartProvider>
             </ConversionsProvider>
           </WishlistProvider>
