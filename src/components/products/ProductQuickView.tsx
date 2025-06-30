@@ -25,8 +25,7 @@ export default function ProductQuickView({ product, onClose }: ProductQuickViewP
   const handleAddToCart = () => {
     addItem(product, quantity);
     trackAddToCart(product.id, product.name, product.price * quantity);
-    toast.success(`${product.name} added to cart!`);
-    onClose();
+    onClose();  // CartContext will handle the notification
   };
 
   const handleBuyNow = () => {

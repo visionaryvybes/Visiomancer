@@ -295,16 +295,13 @@ export default function ProductDetailClient({ product: initialProduct, fetcherEr
   };
 
   const handleAddToCart = () => {
-    if (!product) return;
-    
     const userEmail = getUserEmail();
     
     // Track conversion event first
     trackAddToCart(product.id, product.name, product.price, 'USD', userEmail || undefined);
     
-    // Then add to cart
+    // Then add to cart (CartContext will handle the notification)
     addItem(product, 1);
-    toast.success(`${product.name} added to cart!`);
   };
 
   const handleBuyNow = () => {

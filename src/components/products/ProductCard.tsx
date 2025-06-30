@@ -32,8 +32,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onQuickView }) => {
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    addItem(product, 1);
-    toast.success(`${product.name} added to cart!`);
+    addItem(product, 1);  // CartContext will handle the notification
   };
 
   const handleQuickView = (e: React.MouseEvent) => {
