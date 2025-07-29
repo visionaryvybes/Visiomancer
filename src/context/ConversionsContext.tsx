@@ -212,6 +212,18 @@ export const ConversionsProvider = ({ children }: { children: ReactNode }) => {
     // Send to Pinterest API
     sendConversionEvent(event);
     
+    // Also send Pinterest pagevisit event with product data
+    if (typeof window !== 'undefined' && window.pintrk && productId) {
+      window.pintrk('track', 'pagevisit', {
+        page_url: window.location.href,
+        page_title: document.title,
+        content_ids: [productId],
+        content_name: productName,
+        content_category: category || 'digital_art'
+      });
+      console.log('[Pinterest] Page Visit with Product ID tracked:', productId);
+    }
+    
     console.log('[Conversions] Page Visit tracked:', event);
   }, [generateEventId, getUserData, getUserEmail]);
 
@@ -253,6 +265,19 @@ export const ConversionsProvider = ({ children }: { children: ReactNode }) => {
     
     // Send to Pinterest API
     sendConversionEvent(event);
+    
+    // Also send Pinterest addtocart event
+    if (typeof window !== 'undefined' && window.pintrk) {
+      window.pintrk('track', 'addtocart', {
+        value: value,
+        order_quantity: 1,
+        currency: currency,
+        content_ids: [productId],
+        content_name: productName,
+        content_category: 'digital_art'
+      });
+      console.log('[Pinterest] Add to Cart tracked:', productId);
+    }
     
     console.log('[Conversions] Add to Cart tracked:', event);
   }, [generateEventId, getUserData, getUserEmail]);

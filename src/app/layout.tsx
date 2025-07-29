@@ -112,6 +112,8 @@ export default function RootLayout({
               pintrk('page');
               
               // Also send page event with enhanced data
+              // Note: Product-specific pagevisit events with content_ids are handled 
+              // by usePageTracking hook on individual product pages
               pintrk('track', 'pagevisit', {
                 page_url: window.location.href,
                 page_title: document.title

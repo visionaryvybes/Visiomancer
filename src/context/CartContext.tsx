@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react'
 import { CartItem, Product, ProductSource } from '@/types'
+import { useConversions } from './ConversionsContext'
 import toast from 'react-hot-toast'
 
 const LOCAL_STORAGE_KEY = 'myEcomCart'
@@ -23,6 +24,7 @@ const CartContext = createContext<CartContextType | undefined>(undefined)
 export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [cartItems, setCartItems] = useState<CartItem[]>([])
   const [isLoaded, setIsLoaded] = useState(false); // To prevent hydration mismatch
+  const { trackAddToCart } = useConversions();
 
   // Load cart from localStorage on initial mount
   useEffect(() => {
@@ -91,15 +93,15 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     // Show toast *after* state update, based on the flag
     if (isNewItem) {
       toast.success(`${item.name} added to cart.`);
+      
+      // Track Pinterest Add to Cart event for new items only
+      trackAddToCart(item.id, item.name, item.price);
     } else {
       toast.success(`${item.name} quantity updated in cart.`);
     }
     console.log('[CartContext] !!! addItem function execution end !!!'); // Log end
-    
-    // Note: Pinterest conversion tracking is now handled by ConversionsContext
-    // This avoids duplicate tracking events
 
-  }, []);
+  }, [trackAddToCart]);
 
   const removeItem = useCallback((itemId: string, selectedVariantId?: string | number) => {
     console.log('[CartContext] removeItem called:', { itemId, selectedVariantId });
