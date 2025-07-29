@@ -39,9 +39,9 @@ export async function generateStaticParams() {
 // async function getProduct(id: string): Promise<{ product: Product | null; error?: Error & { status?: number } }> { ... }
 
 interface ProductDetailPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 // Type for serialized error passed to client
@@ -53,7 +53,7 @@ interface SerializableError {
 // This is now a Server Component
 export default async function ProductDetailPage({ params }: ProductDetailPageProps) {
   // Decode the URL-encoded ID parameter
-  const { id: rawId } = params;
+  const { id: rawId } = await params;
   const id = decodeURIComponent(rawId);
   
   let product: Product | null = null;

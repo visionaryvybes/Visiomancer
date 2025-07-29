@@ -4,10 +4,10 @@ import { getProductById } from '@/lib/api/products'
 // Standard App Router dynamic route segment handler
 export async function GET(
   request: NextRequest, // Use NextRequest
-  { params }: { params: { id: string } } // Destructure params from the second argument
+  { params }: { params: Promise<{ id: string }> } // params is a Promise in Next.js 15
 ) {
-  // Destructure and decode the URL-encoded ID parameter
-  const { id: rawId } = params;
+  // Await params and destructure and decode the URL-encoded ID parameter
+  const { id: rawId } = await params;
   const id = decodeURIComponent(rawId); 
 
   if (!id) {

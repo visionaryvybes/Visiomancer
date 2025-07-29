@@ -77,10 +77,10 @@ export async function POST(request: NextRequest) {
       click_id: event.user_data?.click_id
     });
     
-    // Add client IP address from request
-    const clientIP = request.ip || 
-                    request.headers.get('x-forwarded-for')?.split(',')[0] ||
+    // Add client IP address from request (NextRequest doesn't have .ip in Next.js 15)
+    const clientIP = request.headers.get('x-forwarded-for')?.split(',')[0] ||
                     request.headers.get('x-real-ip') ||
+                    request.headers.get('cf-connecting-ip') ||
                     '127.0.0.1';
     
     event.user_data.client_ip_address = clientIP;
